@@ -177,11 +177,13 @@ KPI cards clicaveis: A Entregar / Entregues / Reagendadas (filtro client-side)
 
 ```
 [docker compose up]
-   └─▶ logfull-api: CMD "python app/seed.py && uvicorn ..."
-         ├─ wait_for_db()  (10 tentativas x 3 s)
-         ├─ Base.metadata.create_all(engine)   ← cria as 5 tabelas e os 3 enums
-         └─ popula (somente se users estiver vazio):
-               5 usuarios, 5 produtos, 3 NFs, 6 itens
+   └─▶ logfull-db (healthcheck pg_isready)
+         └─▶ logfull-migrate (one-shot): alembic upgrade head
+               ├─ cria/atualiza o schema versionado
+               └─ python app/seed.py  (so com SEED_DEMO_DATA=true)
+                     └─ popula: 5 usuarios, 5 produtos, 3 NFs, 6 itens
+         └─▶ logfull-api: uvicorn (so sobe se o migrate saiu com 0)
+               └─▶ logfull-web: nginx
 ```
 
 **Nao existe nenhuma outra entrada de dados.**
@@ -212,4 +214,3 @@ produtos ou NFs pela API. Ver `[[integrations/data-sources]]`.
 | Sem `usuario_id` em `nf_itens` | nao se sabe quem conferiu |
 | `GET /admin/motoristas` exige `admin|supervisor` | `operador` nao consegue expedir (P1-04) |
 | `require_roles` ausente em `/delivery/*` | qualquer perfil pode dar baixa (P1-05) |
-| `create_all` fora da API | API sobe sem tabelas se o seed nao rodar (P1-03) |

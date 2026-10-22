@@ -14,9 +14,17 @@ export interface Product {
   referencia: string;
   descricao: string;
   qtd_embalagem: number;
-  localizacao: string;
+  // Nulo enquanto o produto nao recebeu endereco (a planilha de referencia
+  // cobre 617 de 1.998 SKUs).
+  localizacao?: string | null;
   estoque_caixas: number;
-  codigo_barras_master: string;
+  // ean13 = unidade; ean14 = caixa master (DUN14); master legado = codigo
+  // unico antigo, ainda aceito na bipagem.
+  ean13?: string | null;
+  ean14?: string | null;
+  ean13_origem?: string | null;
+  ean14_origem?: string | null;
+  codigo_barras_master?: string | null;
 }
 
 export interface NFItem {

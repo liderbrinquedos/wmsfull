@@ -125,18 +125,29 @@ registrado em `sync_runs`.
 
 ---
 
-## 5. Estado atual do codigo (antes da implementacao)
+## 5. Estado atual do codigo (apos a fase 1)
 
-Nada disso existe ainda. Hoje:
+O que ja existe:
 
-- nao ha `/sync/*` nem `/import/*`;
-- nao ha `ean13`/`ean14` no modelo (apenas `codigo_barras_master`);
-- nao ha tabelas de controle (`sync_runs`, `sync_run_errors`, `sync_requests`);
-- nao ha CRUD de produto no admin;
-- o catalogo vem inteiro do `seed.py`.
+- schema versionado com Alembic (`backend/alembic/versions/`), criado por um container
+  one-shot `logfull-migrate`;
+- `products.ean13`, `products.ean14` e as colunas de origem (`ean13_origem`,
+  `ean14_origem`);
+- `notas_fiscais.chave_nfe`, `serie`, `cnpj_fornecedor`, `data_emissao`;
+- tabelas de controle `sync_runs`, `sync_run_errors` e `sync_requests` (vazias);
+- bipagem por `ean14` e pelo `codigo_barras_master` legado; `ean13` e recusado com
+  mensagem explicita;
+- `localizacao` aceita nulo, e o frontend trata endereco fora do padrao como texto.
 
-A tela do WMS exibe "Carregando produtos do ERP..." e **nao ha ERP conectado** — mensagem a
-corrigir quando o sync entrar.
+O que ainda **nao** existe:
+
+- endpoints `/sync/*` e `/import/*`;
+- o agente `wmsfull-sync` no servidor interno;
+- CRUD de EAN no admin;
+- qualquer carga real: o catalogo vem inteiro do `seed.py`.
+
+A tela do WMS ainda exibe "Carregando produtos do ERP..." sem ERP conectado — mensagem a
+corrigir quando o sync entrar (P2-14).
 
 ---
 

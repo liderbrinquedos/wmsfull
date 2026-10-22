@@ -1,6 +1,6 @@
 # Documento de Design — Producao e Fontes de Dados (WMSFull)
 
-**Data:** 2026-10-22 · **Status:** aprovado (fases 0 a 5 nao implementadas)
+**Data:** 2026-10-22 · **Status:** aprovado; fases 0 e 1 implementadas
 
 ---
 
@@ -284,9 +284,14 @@ silencio e para que o relatorio de import saiba o que pode alterar.
 | `cnpj_fornecedor` | novo `String(14)`, nullable |
 | `data_emissao` | novo `Date`, nullable |
 | `atualizado_em` | novo `timestamp` |
-| `numero` | mantem `unique` (compatibilidade com o seed) |
+| `numero` | **perde o `unique` global**; continua indexado |
 
-Indice unico composto `(cnpj_fornecedor, serie, numero)`; Postgres permite multiplos `NULL`.
+Indice unico composto `(cnpj_fornecedor, serie, numero)`; Postgres permite multiplos `NULL`,
+entao as NFs antigas (sem CNPJ/serie) continuam validas sem colidir entre si.
+
+Manter o `unique` global em `numero` anularia a chave composta: o segundo fornecedor que
+emitisse a NF 1234 seria rejeitado. A constraint foi removida na migracao inicial
+(revisao da ADR-006).
 
 ### 6.3 Tabelas de controle
 
@@ -299,7 +304,7 @@ sync_requests    (id, solicitado_por, solicitado_em, atendido_em, run_id, status
 
 `tipo` em `erp` | `ficha` | `localizacao` — um par de tabelas atende os tres caminhos.
 
-### 6.4 Migracoes (ADR-006)
+### 6.4 Migracoes (ADR-006) - implementado
 
 1. `alembic init` + `env.py` lendo `DATABASE_URL` do Settings.
 2. Uma migracao inicial por `autogenerate` ja com o schema final.
@@ -307,6 +312,11 @@ sync_requests    (id, solicitado_por, solicitado_em, atendido_em, run_id, status
    `SEED_DEMO_DATA=true`.
 4. Container one-shot `migrate` roda `alembic upgrade head` e sai com 0; `api` depende com
    `condition: service_completed_successfully`.
+
+Revisao da migracao gerada: `downgrade()` tambem remove os tipos ENUM do Postgres
+(`perfil_enum`, `nf_status_enum`, `delivery_status_enum`), senao um novo `upgrade head`
+falha com `type ... already exists`. O ciclo completo `downgrade base` -> `upgrade head`
+foi executado e verificado.
 
 ---
 
@@ -334,8 +344,8 @@ Nenhuma env com valor padrao no codigo: `SECRET_KEY` sem default quebra o boot d
 
 | Fase | Conteudo | Tamanho |
 |---|---|---|
-| 0. Seguranca | P0-01 a P0-05: segredos, credenciais do login, upload validado, `client_max_body_size`, compose | P |
-| 1. Schema | ADR-006, Alembic, colunas novas, seed data-only, container `migrate` | M |
+| 0. Seguranca | P0-01 a P0-05: segredos, credenciais do login, upload validado, `client_max_body_size`, compose | P | **concluida** |
+| 1. Schema | ADR-006, Alembic, colunas novas, seed data-only, container `migrate` | M | **concluida** |
 | 2. Homologacao | deploy Coolify com seed de demonstracao; valida dominio, TLS e ordem de boot | P |
 | 3. Ingestao ERP | `/sync/*`, agente no servidor interno, `sync_runs`, painel e botao no admin | G |
 | 4. Planilhas | `/import/preview` + `/apply`, fichas e localizacoes, CRUD de EAN no admin | M |

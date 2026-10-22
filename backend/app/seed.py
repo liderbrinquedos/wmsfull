@@ -1,6 +1,11 @@
 """
-Seed inicial do banco de dados.
-Executado automaticamente ao iniciar o container da API.
+Seed de dados de demonstracao.
+
+Roda depois do `alembic upgrade head` (container `migrate`) e apenas insere
+dados: o schema e responsabilidade do Alembic desde a ADR-006.
+
+So executa com SEED_DEMO_DATA=true. Em producao fica desligado, para nao criar
+usuarios com senha conhecida.
 """
 import sys
 import os
@@ -11,7 +16,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from sqlalchemy import text
 from app.core.config import settings
-from app.core.database import engine, SessionLocal, Base
+from app.core.database import engine, SessionLocal
 from app.core.security import get_password_hash
 from app.models.user import User
 from app.models.product import Product
@@ -42,10 +47,6 @@ def seed():
 
     wait_for_db()
 
-    # Criar tabelas
-    Base.metadata.create_all(bind=engine)
-    print("✅ Tabelas criadas!")
-
     db = SessionLocal()
     try:
         # Verificar se já foi seedado
@@ -66,12 +67,14 @@ def seed():
         print("✅ Usuários criados!")
 
         # ── Produtos ─────────────────────────────────────────────
+        # EAN13 = unidade; EAN14 = caixa master (DUN14). Valores com digito
+        # verificador correto, para o demo exercitar a mesma validacao do import.
         products = [
-            Product(id="p1", codigo="21", referencia="49", descricao="Caixa Produto A", qtd_embalagem=6,  localizacao="F102C", estoque_caixas=20, codigo_barras_master="7891234560021"),
-            Product(id="p2", codigo="22", referencia="50", descricao="Caixa Produto B", qtd_embalagem=12, localizacao="A203B", estoque_caixas=15, codigo_barras_master="7891234560022"),
-            Product(id="p3", codigo="23", referencia="51", descricao="Caixa Produto C", qtd_embalagem=4,  localizacao="B101A", estoque_caixas=30, codigo_barras_master="7891234560023"),
-            Product(id="p4", codigo="24", referencia="52", descricao="Caixa Produto D", qtd_embalagem=24, localizacao="C305D", estoque_caixas=8,  codigo_barras_master="7891234560024"),
-            Product(id="p5", codigo="25", referencia="53", descricao="Caixa Produto E", qtd_embalagem=8,  localizacao="D204A", estoque_caixas=12, codigo_barras_master="7891234560025"),
+            Product(id="p1", codigo="21", referencia="49", descricao="Caixa Produto A", qtd_embalagem=6,  localizacao="F102C", estoque_caixas=20, ean13="7891234560018", ean14="17891234560015", ean13_origem="erp", ean14_origem="ficha"),
+            Product(id="p2", codigo="22", referencia="50", descricao="Caixa Produto B", qtd_embalagem=12, localizacao="A203B", estoque_caixas=15, ean13="7891234560025", ean14="17891234560022", ean13_origem="erp", ean14_origem="ficha"),
+            Product(id="p3", codigo="23", referencia="51", descricao="Caixa Produto C", qtd_embalagem=4,  localizacao="B101A", estoque_caixas=30, ean13="7891234560032", ean14="17891234560039", ean13_origem="erp", ean14_origem="ficha"),
+            Product(id="p4", codigo="24", referencia="52", descricao="Caixa Produto D", qtd_embalagem=24, localizacao="C305D", estoque_caixas=8,  ean13="7891234560049", ean14="17891234560046", ean13_origem="erp", ean14_origem="ficha"),
+            Product(id="p5", codigo="25", referencia="53", descricao="Caixa Produto E", qtd_embalagem=8,  localizacao="D204A", estoque_caixas=12, ean13="7891234560056", ean14="17891234560053", ean13_origem="erp", ean14_origem="ficha"),
         ]
         db.add_all(products)
         db.flush()

@@ -25,21 +25,6 @@ Nenhum item em aberto. Os cinco foram resolvidos na fase 0 (ver **Itens resolvid
 - **Correcao:** `allow_origins` a partir de env var `CORS_ORIGINS`.
 - **Status:** resolvido junto com a fase 0 (ver **Itens resolvidos**).
 
-### P1-02 Schema do banco sem migracoes
-- `backend/alembic/` vazio, sem `alembic.ini`/`env.py`; `alembic` nao esta em `requirements.txt`.
-- `Base.metadata.create_all` roda apenas em `app/seed.py:38` e **nunca** faz `ALTER TABLE`.
-- **Impacto:** qualquer mudanca de coluna exige recriar o volume `pgdata` (perda de dados).
-- **Correcao:** adotar Alembic - ver [[decisions/006-alembic-e-migracoes]].
-- **Planejado:** fase 1 do roadmap.
-
-### P1-03 `create_all` fora do ciclo da API
-- `backend/app/main.py` nao importa `Base` nem os models.
-- **Impacto:** rodar `uvicorn app.main:app` sem o seed beforehand quebra em runtime com
-  `relation "users" does not exist`.
-- **Correcao:** container `migrate` one-shot (`alembic upgrade head`) com `restart: "no"`,
-  do qual a `api` depende - ver [[decisions/006-alembic-e-migracoes]].
-- **Planejado:** fase 1 do roadmap.
-
 ### P1-04 Operador recebe 403 ao expedir NF para entrega
 - `frontend/src/modules/conference/ConferenceSession.tsx:27` chama `adminApi.getMotoristas()`,
   que exige `admin|supervisor` (`backend/app/routers/admin.py:73`).
@@ -73,13 +58,6 @@ Nenhum item em aberto. Os cinco foram resolvidos na fase 0 (ver **Itens resolvid
 - `backend/app/models/nota_fiscal.py:26`, `backend/app/models/delivery.py:26`,
   `backend/app/core/security.py:32`.
 - **Correcao:** `datetime.now(timezone.utc)`.
-
-### P1-10 `notas_fiscais.numero` nao e chave natural
-- `backend/app/models/nota_fiscal.py:19` - `numero` unico isoladamente.
-- **Impacto:** dois fornecedores podem emitir a NF 1234 no mesmo dia; o segundo lote do
-  sync do ERP seria rejeitado pela constraint.
-- **Correcao:** `chave_nfe` (44) unica + indice composto
-  `(cnpj_fornecedor, serie, numero)` - ver spec, secao 6.2.
 
 ### P1-11 Cobertura de EAN14 (caixa master) em 24,6%
 - 491 de 1.997 SKUs tem DUN14 nas fichas tecnicas; faltam 1.508.
@@ -141,14 +119,6 @@ Nenhum item em aberto. Os cinco foram resolvidos na fase 0 (ver **Itens resolvid
 
 ### P2-12 `JSON.parse` sem `try/catch` no store
 - `frontend/src/store/authStore.ts:15` - `localStorage` corrompido quebra o bundle.
-
-### P2-13 Decoder de localizacao quebra com endereco fora do padrao
-- `frontend/src/modules/wms/LocationBadge.tsx:8-11` - assume sempre 5 caracteres.
-- 49 SKUs da planilha de referencia usam texto livre (`MOSSORO`, `SACARIA`,
-  `BOLAS CHEIAS`) e 2 usam endereco duplo (`A041A/A042A`).
-- **Impacto:** tooltip com "Rua M - Prateleira O - Posicao SS - Nivel O".
-- **Correcao:** validar o padrao `RUA + 3 digitos + NIVEL` e, fora dele, renderizar texto
-  simples sem decodificar.
 
 ### P2-14 Mensagem de carregamento cita um ERP que nao existe
 - `frontend/src/modules/wms/WMSPage.tsx` - "Carregando produtos do ERP...".
@@ -219,3 +189,27 @@ Nenhum item em aberto. Os cinco foram resolvidos na fase 0 (ver **Itens resolvid
 - **Resolvido em:** 2026-10-22 (fase 0).
 - `CORS_ORIGINS` (env, separado por virgula). Vazio = apenas a mesma origem, que e o caso
   do deploy (nginx serve o SPA e faz proxy de `/api`).
+
+### P1-02 Schema do banco sem migracoes
+- **Resolvido em:** 2026-10-22 (fase 1).
+- Alembic configurado (`backend/alembic.ini`, `env.py`, uma revisao inicial) e
+  `alembic==1.13.1` em `requirements.txt`.
+- `downgrade()` remove tambem os tipos ENUM, para o ciclo `downgrade base` -> `upgrade head`
+  funcionar. Ver [[decisions/006-alembic-e-migracoes]].
+
+### P1-03 `create_all` fora do ciclo da API
+- **Resolvido em:** 2026-10-22 (fase 1).
+- `seed.py` nao cria mais schema; o container `logfull-migrate` roda `alembic upgrade head`
+  e a `api` depende dele com `condition: service_completed_successfully`.
+- O `CMD` da API ficou so com o `uvicorn`.
+
+### P1-10 `notas_fiscais.numero` nao e chave natural
+- **Resolvido em:** 2026-10-22 (fase 1).
+- `chave_nfe` unica (44) + indice composto `(cnpj_fornecedor, serie, numero)`.
+- O `unique` global em `numero` foi removido: mante-lo anularia a chave composta.
+
+### P2-13 Decoder de localizacao quebra com endereco fora do padrao
+- **Resolvido em:** 2026-10-22 (fase 1), junto com `localizacao` passando a aceitar nulo.
+- `LocationBadge` valida `RUA + 3 digitos + NIVEL`; fora disso renderiza o texto cru.
+- `MoveLocationModal` nao quebra com localizacao nula e recusa o parse quando o endereco
+  nao segue o padrao.

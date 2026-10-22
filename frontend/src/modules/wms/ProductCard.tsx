@@ -53,8 +53,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, canEdit, onEd
         </div>
 
         <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-          <span>Cód. Barras Master: </span>
-          <span className="barcode-text" style={{ color: '#e2e8f0' }}>{product.codigo_barras_master}</span>
+          <span>Cód. Caixa (DUN14): </span>
+          <span className="barcode-text" style={{ color: product.ean14 || product.codigo_barras_master ? '#e2e8f0' : 'var(--warning)' }}>
+            {product.ean14 || product.codigo_barras_master || 'sem código de caixa'}
+          </span>
         </div>
       </div>
 

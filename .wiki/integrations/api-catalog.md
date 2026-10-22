@@ -89,10 +89,16 @@ Qualquer autenticado. Lista com busca opcional.
     "qtd_embalagem": 6,
     "localizacao": "F102C",
     "estoque_caixas": 20,
-    "codigo_barras_master": "7891234560021"
+    "ean13": "7891234560018",
+    "ean14": "17891234560015",
+    "ean13_origem": "erp",
+    "ean14_origem": "ficha",
+    "codigo_barras_master": null
   }
 ]
 ```
+
+`localizacao`, `ean13`, `ean14` e `codigo_barras_master` aceitam `null` (fase 1).
 
 ### GET `/wms/products/{product_id}`
 Qualquer autenticado. **404** "Produto nao encontrado".

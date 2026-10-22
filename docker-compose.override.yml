@@ -14,11 +14,13 @@ services:
     ports:
       - "5435:5432"
 
+  logfull-migrate:
+    environment:
+      SEED_DEMO_DATA: "true"
+
   logfull-api:
     ports:
       - "8005:8000"
-    environment:
-      SEED_DEMO_DATA: "true"
 
   logfull-web:
     ports:

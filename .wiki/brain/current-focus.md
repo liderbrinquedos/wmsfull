@@ -15,8 +15,8 @@
 | 2 | Repositorio GitHub | Concluido |
 | 3 | Brainstorm de producao + fontes de dados | Concluido (spec + ADR-006 + ADR-007) |
 | 4 | Fase 0 - seguranca | Concluido (2026-10-22) |
-| 5 | Fase 1 - Alembic e schema | **Proximo** |
-| 6 | Fase 2 - homologacao no Coolify | Pendente |
+| 5 | Fase 1 - Alembic e schema | Concluido (2026-10-22) |
+| 6 | Fase 2 - homologacao no Coolify | **Proximo** (depende de acesso ao servidor) |
 | 7 | Fase 3 - ingestao ERP (`/sync/*` + agente) | Pendente |
 | 8 | Fase 4 - importacao de planilhas | Pendente |
 | 9 | Fase 5 - go-live | Pendente |
@@ -49,6 +49,20 @@ Itens de `backlog/tech-debt.md` que bloqueavam o deploy:
 - [x] P0-05 `client_max_body_size` no nginx
 
 Extra: P1-01 (CORS por env var) e `SEED_DEMO_DATA` (seed nao roda mais em producao).
+
+---
+
+## Fase 1 - Alembic e schema (concluida em 2026-10-22)
+
+- [x] Alembic configurado (`alembic.ini`, `env.py`, revisao inicial `37849d286475`)
+- [x] Colunas novas em `products` (ean13, ean14, origens, atualizado_em)
+- [x] Colunas novas em `notas_fiscais` (chave_nfe, serie, cnpj, data_emissao, atualizado_em)
+- [x] Tabelas de controle (`sync_runs`, `sync_run_errors`, `sync_requests`)
+- [x] `seed.py` sem `create_all`; container `logfull-migrate` one-shot
+- [x] Bipagem so por ean14/codigo master legado (ean13 recusado com mensagem)
+- [x] Frontend tolera `localizacao` nula e endereco fora do padrao
+
+Pendencia conhecida: `P1-11` (1.508 SKUs sem DUN14) so fecha na fase 4.
 
 ---
 

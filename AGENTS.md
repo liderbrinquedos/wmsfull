@@ -57,8 +57,8 @@ wmsfull/
 │   │   ├── routers/    # auth, wms, conference, delivery, admin
 │   │   ├── crud/       # VAZIO - queries inline nos routers
 │   │   ├── main.py     # App FastAPI, CORS, mount /uploads
-│   │   └── seed.py     # Cria schema + popula dados de exemplo
-│   ├── alembic/        # VAZIO - sem migracoes (ver ADR-003)
+│   │   └── seed.py     # Popula dados de exemplo (SEED_DEMO_DATA)
+│   ├── alembic/        # migracoes versionadas (ADR-006)
 │   └── Dockerfile
 ├── frontend/           # SPA React 18 + Vite 5 + PWA
 │   └── src/

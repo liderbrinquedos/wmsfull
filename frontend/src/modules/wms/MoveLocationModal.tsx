@@ -8,10 +8,15 @@ interface MoveLocationModalProps {
 }
 
 export const MoveLocationModal: React.FC<MoveLocationModalProps> = ({ product, onClose, onSuccess }) => {
-  const [rua, setRua] = useState(product.localizacao[0] || 'A');
-  const [prateleira, setPrateleira] = useState(product.localizacao[1] || '1');
-  const [posicao, setPosicao] = useState(product.localizacao.slice(2, 4) || '01');
-  const [nivel, setNivel] = useState(product.localizacao[4] || 'A');
+  // Produto pode nao ter localizacao (ou ter texto livre, ex.: MOSSORO).
+  // Nesse caso o formulario comeca vazio com os defaults.
+  const atual = product.localizacao ?? '';
+  const valida = /^[A-Z]\d{3}[A-Z]$/.test(atual);
+
+  const [rua, setRua] = useState(valida ? atual[0] : 'A');
+  const [prateleira, setPrateleira] = useState(valida ? atual[1] : '1');
+  const [posicao, setPosicao] = useState(valida ? atual.slice(2, 4) : '01');
+  const [nivel, setNivel] = useState(valida ? atual[4] : 'A');
   const [estoqueCaixas, setEstoqueCaixas] = useState(product.estoque_caixas);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -47,7 +52,7 @@ export const MoveLocationModal: React.FC<MoveLocationModalProps> = ({ product, o
             Cód: <strong>{product.codigo}</strong> · Ref: <strong>{product.referencia}</strong>
           </p>
           <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-            Localização atual: <span className="barcode-text" style={{ color: 'var(--primary)' }}>{product.localizacao}</span>
+            Localização atual: <span className="barcode-text" style={{ color: 'var(--primary)' }}>{product.localizacao || 'sem localização'}</span>
           </p>
         </div>
 

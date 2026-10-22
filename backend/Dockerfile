@@ -15,4 +15,6 @@ RUN mkdir -p /app/uploads
 
 EXPOSE 8000
 
-CMD ["sh", "-c", "python app/seed.py && uvicorn app.main:app --host 0.0.0.0 --port 8000"]
+# O schema e criado pelo container `migrate` (alembic upgrade head), nao pela
+# API. Aqui so sobe o servidor.
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

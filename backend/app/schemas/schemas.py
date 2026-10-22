@@ -43,9 +43,13 @@ class ProductOut(BaseModel):
     referencia: str
     descricao: str
     qtd_embalagem: int
-    localizacao: str
+    localizacao: Optional[str] = None
     estoque_caixas: int
-    codigo_barras_master: str
+    ean13: Optional[str] = None
+    ean14: Optional[str] = None
+    ean13_origem: Optional[str] = None
+    ean14_origem: Optional[str] = None
+    codigo_barras_master: Optional[str] = None
 
     class Config:
         from_attributes = True

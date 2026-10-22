@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { NotaFiscal, conferenceApi, adminApi, User } from '../../api/client';
+import { NotaFiscal, Product, conferenceApi, adminApi, User } from '../../api/client';
 import { LocationBadge } from '../wms/LocationBadge';
 
 interface ConferenceSessionProps {
@@ -68,6 +68,11 @@ export const ConferenceSession: React.FC<ConferenceSessionProps> = ({ nf, onBack
       setTimeout(() => inputRef.current?.focus(), 50);
     }
   };
+
+  // Codigo da CAIXA: ean14 (DUN14) e, como legado, o codigo master antigo.
+  // Sem nenhum dos dois o produto nao pode ser bipado como caixa.
+  const codigoCaixa = (produto?: Product) =>
+    produto?.ean14 || produto?.codigo_barras_master || null;
 
   const handleAssignMotorista = async () => {
     if (!selectedMotorista) return;
@@ -256,7 +261,9 @@ export const ConferenceSession: React.FC<ConferenceSessionProps> = ({ nf, onBack
                     {item.produto?.descricao || 'Produto'}
                   </h4>
                   <div style={{ marginTop: '4px', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                    Cód. Barras Master: <span className="barcode-text" style={{ color: '#cbd5e1' }}>{item.produto?.codigo_barras_master}</span>
+                    Cód. Caixa (DUN14): <span className="barcode-text" style={{ color: '#cbd5e1' }}>
+                      {codigoCaixa(item.produto) || 'sem código de caixa'}
+                    </span>
                   </div>
                 </div>
 
@@ -285,15 +292,23 @@ export const ConferenceSession: React.FC<ConferenceSessionProps> = ({ nf, onBack
                 }} />
               </div>
 
-              {/* Simulation Quick Scan button */}
+              {/* Bipagem rapida de 1 caixa (simula a leitura do codigo da caixa) */}
               {!isFinished && !item.conferido && item.produto && (
                 <div style={{ marginTop: '10px', display: 'flex', justifyContent: 'flex-end' }}>
                   <button
                     type="button"
-                    onClick={() => handleQuickScan(item.produto!.codigo_barras_master)}
+                    onClick={() => {
+                      const codigo = codigoCaixa(item.produto);
+                      if (codigo) handleQuickScan(codigo);
+                    }}
+                    disabled={!codigoCaixa(item.produto)}
                     className="btn btn-secondary"
                     style={{ fontSize: '0.78rem', padding: '4px 10px' }}
-                    title="Simular leitura de 1 caixa deste produto"
+                    title={
+                      codigoCaixa(item.produto)
+                        ? 'Simular leitura de 1 caixa deste produto'
+                        : 'Produto sem código de caixa cadastrado (DUN14)'
+                    }
                   >
                     Bipar Caixa (+1)
                   </button>

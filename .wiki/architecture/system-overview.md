@@ -76,10 +76,16 @@ users ──┬── notas_fiscais ──┬── nf_itens ──── produc
 | Tabela | Colunas principais | Observacoes |
 |---|---|---|
 | `users` | id, nome, email, senha_hash, perfil, ativo | `email` unique; `perfil` ENUM |
-| `products` | id, codigo, referencia, descricao, qtd_embalagem, localizacao, estoque_caixas, codigo_barras_master | `codigo` e `codigo_barras_master` unique |
-| `notas_fiscais` | id, numero, fornecedor, destinatario, endereco, status, motorista_id, created_at | `numero` unique; `status` ENUM; FK -> users |
+| `products` | id, codigo, referencia, descricao, qtd_embalagem, localizacao, estoque_caixas, ean13, ean14, ean13_origem, ean14_origem, codigo_barras_master, atualizado_em | `codigo`, `ean13`, `ean14` e `codigo_barras_master` unique; `localizacao` aceita nulo |
+| `notas_fiscais` | id, numero, chave_nfe, serie, cnpj_fornecedor, fornecedor, destinatario, endereco, data_emissao, status, motorista_id, created_at, atualizado_em | `chave_nfe` unique; `(cnpj_fornecedor, serie, numero)` unique; `numero` indexado (nao unico); `status` ENUM; FK -> users |
 | `nf_itens` | id, nf_id, product_id, qtd_nota, qtd_embalagem, caixas_necessarias, caixas_lidas, conferido | FK -> notas_fiscais, products |
 | `deliveries` | id, nf_id, motorista_id, status, foto_canhoto_url, motivo_falha, data_reagendamento, created_at | `status` ENUM; FK -> notas_fiscais, users |
+| `sync_runs` | id, tipo, origem, status, iniciado_em, finalizado_em, lidos, gravados, erros, arquivo, mensagem, solicitado_por | controle de ingestao; FK -> users |
+| `sync_run_errors` | id, run_id, entidade, chave, campo, motivo | erro por item; FK -> sync_runs |
+| `sync_requests` | id, solicitado_por, solicitado_em, atendido_em, run_id, status | pedido de sync manual; FK -> users, sync_runs |
+
+O schema e criado e versionado por Alembic (`backend/alembic/versions/`), nao por
+`create_all` - ver [[decisions/006-alembic-e-migracoes]].
 
 **Enums nativos do PostgreSQL**
 | Enum | Valores |
@@ -130,15 +136,16 @@ Detalhe completo em `[[integrations/api-catalog]]`.
 | Service | Build | Ports (dev) | Volumes | CMD |
 |---|---|---|---|---|
 | `logfull-db` | `postgres:16-alpine` | 5435:5432 | `pgdata:/var/lib/postgresql/data` | (postgres) |
-| `logfull-api` | `./backend` | 8005:8000 | `uploads:/app/uploads` | `python app/seed.py && uvicorn app.main:app --host 0.0.0.0 --port 8000` |
+| `logfull-migrate` | `./backend` | - | - | `alembic upgrade head && python app/seed.py` (one-shot) |
+| `logfull-api` | `./backend` | 8005:8000 | `uploads:/app/uploads` | `uvicorn app.main:app --host 0.0.0.0 --port 8000` |
 | `logfull-web` | `./frontend` | 3005:80 | - | `nginx -g "daemon off;"` |
 
-**Healthcheck:** apenas no Postgres (`pg_isready -U logfull`, 10s/5s/5 retries). A API e o
-web nao tem healthcheck proprio (recomendado para o Coolify).
+**Healthcheck:** banco (`pg_isready`, 10s/5s/5), API (`GET /health` via urllib, 30s) e web
+(`wget --spider`, 30s).
 
-**Ordem de boot:** `logfull-api` depende de `logfull-db` com
-`condition: service_healthy`; internamente o `seed.py` tambem faz `wait_for_db()`
-(10 tentativas x 3 s).
+**Ordem de boot:** `logfull-migrate` depende do `logfull-db` com
+`condition: service_healthy`; `logfull-api` depende do migrate com
+`condition: service_completed_successfully`; `logfull-web` depende da API `healthy`.
 
 ---
 

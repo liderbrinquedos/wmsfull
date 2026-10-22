@@ -18,6 +18,24 @@ services:
       timeout: 5s
       retries: 5
 
+  # ── Migracoes + seed (one-shot) ───────────────────────────────
+  # Cria/atualiza o schema com Alembic e sai com 0. A API so sobe depois.
+  # O seed apenas insere dados e e no-op quando SEED_DEMO_DATA=false.
+  logfull-migrate:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: "no"
+    depends_on:
+      logfull-db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: ${DATABASE_URL:?defina DATABASE_URL (ver .env.example)}
+      SECRET_KEY: ${SECRET_KEY:?defina SECRET_KEY (openssl rand -hex 32)}
+      SEED_DEMO_DATA: ${SEED_DEMO_DATA:-false}
+      TZ: ${TZ:-America/Sao_Paulo}
+    command: ["sh", "-c", "alembic upgrade head && python app/seed.py"]
+
   # ── API Python FastAPI ────────────────────────────────────────
   logfull-api:
     build:
@@ -27,6 +45,8 @@ services:
     depends_on:
       logfull-db:
         condition: service_healthy
+      logfull-migrate:
+        condition: service_completed_successfully
     environment:
       DATABASE_URL: ${DATABASE_URL:?defina DATABASE_URL (ver .env.example)}
       SECRET_KEY: ${SECRET_KEY:?defina SECRET_KEY (openssl rand -hex 32)}
@@ -34,7 +54,6 @@ services:
       ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-480}
       UPLOAD_DIR: /app/uploads
       CORS_ORIGINS: ${CORS_ORIGINS:-}
-      SEED_DEMO_DATA: ${SEED_DEMO_DATA:-false}
       TZ: ${TZ:-America/Sao_Paulo}
     volumes:
       - uploads:/app/uploads

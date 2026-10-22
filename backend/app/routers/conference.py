@@ -65,11 +65,24 @@ def scan_barcode(
     if nf.status != "em_conferencia":
         raise HTTPException(status_code=400, detail="NF não está em conferência")
 
-    # Localizar produto pelo código de barras
+    # Bipagem aceita apenas codigo de CAIXA: ean14 (DUN14) e, por compatibilidade,
+    # o codigo_barras_master legado. ean13 fica de fora de proposito: e o codigo
+    # da unidade e conta-lo como caixa multiplicaria a conferencia por
+    # qtd_embalagem sem nenhum aviso (ver ADR-007 / spec, secao 3 D6).
     product = db.query(Product).filter(
-        Product.codigo_barras_master == body.codigo_barras
+        (Product.ean14 == body.codigo_barras)
+        | (Product.codigo_barras_master == body.codigo_barras)
     ).first()
     if not product:
+        unidade = db.query(Product).filter(Product.ean13 == body.codigo_barras).first()
+        if unidade:
+            raise HTTPException(
+                status_code=422,
+                detail=(
+                    "Este é o código da unidade (EAN13). Bipe o código da caixa "
+                    "(DUN14) ou use o botão '+1 Caixa'."
+                ),
+            )
         raise HTTPException(status_code=422, detail="Código de barras não reconhecido")
 
     # Localizar item da NF correspondente

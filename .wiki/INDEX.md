@@ -41,6 +41,7 @@ indice antes de tomar decisoes.
 - `[[patterns/coding-standards]]` - Padroes de codigo (Python, SQLAlchemy 2.0, TypeScript, React)
 - `[[patterns/frontend-standards]]` - Design system (tokens dark, componentes, responsivo)
 - `[[patterns/ripgrep-workflow]]` - Workflow de buscas com ripgrep
+- `[[patterns/alembic-workflow]]` - Migracoes com Alembic (autogenerate, downgrade, revisao)
 
 ### Projects
 - `[[projects/wmsfull]]` - Contexto completo do projeto
@@ -84,15 +85,18 @@ indice antes de tomar decisoes.
 ## Comandos Rapidos
 
 ```bash
-# Subir stack completa
+# Subir stack completa (migrate -> api -> web)
 docker compose up -d
+
+# Aplicar migracoes manualmente
+docker compose run --rm logfull-migrate alembic upgrade head
 
 # Acessar
 http://localhost:3005     # SPA
 http://localhost:8005/docs # OpenAPI
 
-# Backend sem Docker
-cd backend && python app/seed.py && uvicorn app.main:app --reload --port 8005
+# Backend sem Docker (banco ja migrado)
+cd backend && SEED_DEMO_DATA=true python app/seed.py && uvicorn app.main:app --reload --port 8005
 
 # Frontend
 cd frontend && npm run dev

@@ -1,7 +1,7 @@
 # ADR-006: Alembic e migracoes versionadas
 
 > **Data:** 2026-10-22
-> **Status:** accepted
+> **Status:** accepted — implementado em 2026-10-22
 > **Autor:** liderbrinquedos
 > **Substitui parcialmente:** [[decisions/003-schema-criado-por-seed-sem-alembic]]
 
@@ -51,6 +51,33 @@ Alembic; quem popula demonstracao e o seed.
 | `create_all` no `main.py` | API sempre cria o schema ao subir | continua sem `ALTER TABLE`; mascara falha de deploy |
 | SQL manual versionado em `.sql` | sem dependencia nova | sem `downgrade`, sem historico, sem `autogenerate` |
 | Alembic (decidido) | historico versionado, `upgrade`/`downgrade`, um comando no deploy | uma dependencia e dois arquivos de configuracao a mais |
+
+## Implementacao (2026-10-22)
+
+Feito exatamente como decidido, mais dois ajustes que apareceram no caminho:
+
+| Arquivo | Papel |
+|---|---|
+| `backend/alembic.ini` | `script_location`, `prepend_sys_path`; **sem** `sqlalchemy.url` |
+| `backend/alembic/env.py` | le `settings.DATABASE_URL` e usa `Base.metadata` como alvo |
+| `backend/alembic/versions/20261022_37849d286475_schema_inicial.py` | schema completo em uma revisao |
+| `backend/app/seed.py` | sem `create_all`; so dados, sob `SEED_DEMO_DATA` |
+| `backend/Dockerfile` | `CMD` apenas `uvicorn`; o seed saiu do boot da API |
+| `docker-compose.yml` | servico `logfull-migrate` (`alembic upgrade head && python app/seed.py`) |
+
+Ajustes feitos na revisao da migracao gerada:
+
+1. **`downgrade()` remove os tipos ENUM.** `op.drop_table` nao apaga
+   `perfil_enum`, `nf_status_enum` e `delivery_status_enum`; sem o drop explicito, um
+   novo `upgrade head` falha com `type ... already exists`. O ciclo
+   `downgrade base` -> `upgrade head` foi testado.
+2. **`notas_fiscais.numero` perdeu o `unique`.** Manter a constraint global anularia o
+   motivo de existir da chave composta: o segundo fornecedor que emitisse a NF 1234
+   seria rejeitado. Ficaram `chave_nfe` unica e
+   `uq_nf_fornecedor_serie_numero`; `numero` continua indexado para busca.
+
+O `migrate` usa a mesma imagem da API e `restart: "no"`; a `api` depende dele com
+`condition: service_completed_successfully`.
 
 ## Consequencias
 

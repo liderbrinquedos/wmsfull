@@ -120,6 +120,31 @@ npm run dev
 
 ---
 
+## Migracoes de schema
+
+O schema e versionado com Alembic (ADR-006). No dia a dia:
+
+```bash
+# aplicar migracoes (o container logfull-migrate faz isso no boot)
+docker compose run --rm logfull-migrate alembic upgrade head
+
+# criar uma migracao depois de alterar os models
+docker compose run --rm -v "$PWD/backend:/app" logfull-migrate \
+  alembic revision --autogenerate -m "descricao curta"
+
+# saber em que versao o banco esta
+docker compose run --rm logfull-migrate alembic current
+```
+
+O `-v "$PWD/backend:/app"` faz o arquivo gerado aparecer no host: o container e
+descartavel e nao persiste nada. Revise o arquivo antes de commitar — o `autogenerate`
+nao detecta renomeacao de coluna e nao sabe que um `DROP` apaga dado.
+
+Nunca use `docker compose down -v` em ambiente com dado real: e o unico comando que
+apaga o volume do Postgres.
+
+---
+
 ## Estrutura
 
 ```
@@ -127,13 +152,15 @@ wmsfull/
 ├── backend/
 │   ├── app/
 │   │   ├── core/           # config.py, database.py, security.py
-│   │   ├── models/         # user, product, nota_fiscal, delivery
+│   │   ├── models/         # user, product, nota_fiscal, delivery, sync
 │   │   ├── schemas/        # schemas.py (13 schemas Pydantic)
 │   │   ├── routers/        # auth, wms, conference, delivery, admin
 │   │   ├── crud/           # (vazio - queries inline nos routers)
 │   │   ├── main.py
-│   │   └── seed.py
-│   ├── alembic/            # (vazio - sem migracoes, ver ADR-003)
+│   │   └── seed.py         # apenas dados, sob SEED_DEMO_DATA
+│   ├── alembic/            # migracoes versionadas (ADR-006)
+│   │   ├── env.py
+│   │   └── versions/
 │   └── Dockerfile
 ├── frontend/
 │   ├── nginx/nginx.conf    # proxy /api e /uploads
@@ -195,11 +222,14 @@ Referencia completa em `.wiki/integrations/api-catalog.md`.
 
 ## Observacoes Importantes
 
-- As tabelas sao criadas por `python app/seed.py` (via `Base.metadata.create_all`),
-  **nao** por Alembic - ver `ADR-003`.
+- O schema e criado e versionado pelo **Alembic**: o container `logfull-migrate` roda
+  `alembic upgrade head` e encerra; a API so sobe depois dele. Ver ADR-006.
+- O `seed.py` **nao** cria tabelas: apenas insere dados de demonstracao, e somente com
+  `SEED_DEMO_DATA=true`.
 - O PWA e instalavel e faz precache do shell estatico, mas **nao tem fila offline**
   - ver `ADR-004`.
-- Nao existe importacao de dados: hoje o catalogo e as NFs vem apenas do seed.
-  Ver `.wiki/integrations/data-sources.md`.
+- Nao existe ingestao de dados ainda: hoje o catalogo e as NFs vem apenas do seed.
+  O plano (agente push + importacao de planilhas) esta em
+  `docs/superpowers/specs/2026-10-22-producao-e-fontes-de-dados-design.md`.
 - O `docker-compose.yml` publica portas para dev local; em producao (Coolify) use
   `expose` + `docker-compose.override.yml` - ver `backlog/tech-debt.md`.
