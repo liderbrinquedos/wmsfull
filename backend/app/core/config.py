@@ -32,6 +32,11 @@ class Settings(BaseSettings):
     # Popula o banco com dados de demonstracao no boot. Nunca em producao.
     SEED_DEMO_DATA: bool = False
 
+    # Primeiro administrador, criado apenas se a tabela de usuarios estiver vazia.
+    # Resolve o go-live sem seed de demonstracao.
+    ADMIN_EMAIL: str = ""
+    ADMIN_SENHA: str = ""
+
     @property
     def cors_origins(self) -> list[str]:
         return [o.strip() for o in self.CORS_ORIGINS.split(",") if o.strip()]

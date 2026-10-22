@@ -169,6 +169,22 @@
 - Ja estava no `requirements.txt` desde o upload de foto; sem ele o `Form`/`File` do
   FastAPI nem sobe.
 
+---
+
+## 2026-10-22 - Fase 2 (deploy) e go-live
+
+### `SEED_DEMO_DATA=false` deixava o sistema sem nenhum usuario
+- A trava do seed resolveu o problema de seguranca, mas criou outro: no primeiro deploy
+  nao havia como logar para criar o primeiro admin. A saida manual seria SQL com hash
+  bcrypt no banco de producao.
+- Solucao: `ADMIN_EMAIL`/`ADMIN_SENHA` criam o primeiro admin **somente** quando a tabela
+  de usuarios esta vazia. Idempotente, e as variaveis saem depois do primeiro acesso.
+
+### Backup sem restore testado nao e backup
+- O dump foi restaurado em um banco descartavel (`logfull_restore`) e conferido
+  (produtos, notas, versao do Alembic) antes de o procedimento entrar no playbook.
+- `pg_dump` pode gravar arquivo vazio sem falhar: o script checa o tamanho do dump.
+
 ### `@tanstack/react-query` declarado e nao usado
 - Nao ha `QueryClientProvider` nem `useQuery`/`useMutation` em lugar nenhum. Todo o
   fetching e `useState` + `useEffect` + axios, com codigo de loading repetido em 5 telas.

@@ -99,7 +99,8 @@ com chave publica.
 ### Credenciais de seed
 
 O `seed.py` so cria os usuarios abaixo quando `SEED_DEMO_DATA=true` (o override local ja
-liga; o compose base desliga):
+liga; o compose base desliga). Em producao, o primeiro admin vem de `ADMIN_EMAIL` /
+`ADMIN_SENHA`, e so quando a tabela de usuarios esta vazia:
 
 | Perfil | Email | Senha |
 |---|---|---|
@@ -110,6 +111,12 @@ liga; o compose base desliga):
 | Motorista | `pedro@log.com` | `moto456` |
 
 > O seed e idempotente: se ja houver usuarios, ele nao recria nada.
+
+### Primeiro administrador (producao)
+
+Com `SEED_DEMO_DATA=false` nao existe usuario algum. O `seed.py` cria o primeiro admin
+quando `ADMIN_EMAIL` e `ADMIN_SENHA` estao definidos e a tabela `users` esta vazia. Depois
+do primeiro acesso, remova as duas variaveis.
 
 ### Desenvolvimento local sem Docker
 

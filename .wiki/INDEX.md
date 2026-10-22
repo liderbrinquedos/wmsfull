@@ -36,6 +36,7 @@ indice antes de tomar decisoes.
 ### Docs (especificacoes de design)
 - `docs/superpowers/specs/2026-10-22-producao-e-fontes-de-dados-design.md` - Producao,
   topologia, contratos de sync/import, modelo de dados e fases
+- `docs/deploy-coolify.md` - Playbook de deploy, backup/restore e checklist de go-live
 
 ### Patterns
 - `[[patterns/coding-standards]]` - Padroes de codigo (Python, SQLAlchemy 2.0, TypeScript, React)

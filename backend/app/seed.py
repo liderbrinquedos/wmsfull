@@ -37,12 +37,54 @@ def wait_for_db(retries=10, delay=3):
     raise Exception("❌ Não foi possível conectar ao banco de dados.")
 
 
+def criar_admin_inicial(db) -> bool:
+    """Primeiro admin em producao, sem depender do seed de demonstracao.
+
+    Sem isso o go-live com SEED_DEMO_DATA=false fica sem nenhum usuario e
+    ninguem consegue logar para criar o primeiro. So roda quando a tabela de
+    usuarios esta vazia.
+    """
+    email = (settings.ADMIN_EMAIL or "").strip()
+    senha = settings.ADMIN_SENHA or ""
+    if not email or not senha:
+        return False
+    if db.query(User).count() > 0:
+        print("ℹ️  Ja existem usuarios: admin inicial nao e criado.")
+        return False
+    if len(senha) < 8:
+        raise SystemExit("ADMIN_SENHA precisa ter ao menos 8 caracteres")
+
+    db.add(
+        User(
+            nome="Administrador",
+            email=email,
+            senha_hash=get_password_hash(senha),
+            perfil="admin",
+            ativo=True,
+        )
+    )
+    db.commit()
+    print(f"✅ Usuario admin inicial criado: {email}")
+    return True
+
+
 def seed():
     # Dados de demonstracao so entram com SEED_DEMO_DATA=true. Em producao o
     # default e false: sem essa trava o container criaria usuarios com senha
     # conhecida (admin123) em todo boot.
     if not settings.SEED_DEMO_DATA:
-        print("⏭️  Seed desativado (SEED_DEMO_DATA=false).")
+        if settings.ADMIN_EMAIL and settings.ADMIN_SENHA:
+            wait_for_db()
+            db = SessionLocal()
+            try:
+                criar_admin_inicial(db)
+            finally:
+                db.close()
+        else:
+            print(
+                "⏭️  Seed desativado "
+                "(SEED_DEMO_DATA=false e sem ADMIN_EMAIL/ADMIN_SENHA)."
+            )
         return
 
     wait_for_db()
