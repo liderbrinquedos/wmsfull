@@ -107,8 +107,8 @@ export const ConferencePage: React.FC = () => {
                     </div>
 
                     <div style={{ marginTop: '6px', fontSize: '0.88rem', color: 'var(--text-muted)' }}>
-                      Fornecedor: <strong style={{ color: '#fff' }}>{nf.fornecedor}</strong>
-                      {nf.destinatario && <span> · Destino: <strong>{nf.destinatario}</strong></span>}
+                      Cliente: <strong style={{ color: '#fff' }}>{nf.cliente}</strong>
+                      {nf.cnpj_cliente && <span> · CNPJ: {nf.cnpj_cliente}</span>}
                     </div>
 
                     <div style={{ marginTop: '4px', fontSize: '0.82rem', color: 'var(--text-dim)' }}>

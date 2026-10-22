@@ -80,10 +80,10 @@ export const DeliveryModal: React.FC<DeliveryModalProps> = ({ nf, onClose, onSuc
         {/* Client & Address Info */}
         <div style={{ background: '#1e293b', padding: '14px', borderRadius: 'var(--radius-md)', marginBottom: '18px' }}>
           <div style={{ fontSize: '0.85rem', color: 'var(--text-dim)', textTransform: 'uppercase', fontWeight: 600 }}>
-            Destinatário
+            Cliente
           </div>
           <div style={{ fontSize: '1.05rem', fontWeight: 700, color: '#fff', marginTop: '2px' }}>
-            {nf.destinatario || 'Cliente'}
+            {nf.cliente || 'Cliente'}
           </div>
           <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '4px' }}>
             📍 {nf.endereco || 'Endereço não informado'}

@@ -90,7 +90,7 @@ Falta para o go-live: deploy no Coolify (fase 2) e carga real + agente apontando
 
 ## Pendencias de Dados (nao de codigo)
 
-- [ ] Fichas tecnicas dos demais fornecedores (1.508 SKUs sem DUN14)
+- [ ] Fichas tecnicas das demais marcas/linhas (1.508 SKUs sem DUN14)
 - [ ] Correcao na origem de 15 codigos com DV invalido e 2 com tamanho errado
 - [ ] Definir quem corrige as 24 divergencias de `CX MASTER` no ERP
 - [ ] Endereco dos 1.381 SKUs sem localizacao

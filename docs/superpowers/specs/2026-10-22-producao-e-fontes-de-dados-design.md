@@ -147,7 +147,7 @@ existe na tela de conferencia.
 ### D7 — Cobertura de DUN14 como pendencia de cadastro
 
 Importar os 491 disponiveis agora; CRUD manual de EAN no admin; seguir coletando fichas
-dos demais fornecedores. A lacuna de 1.508 SKUs e aceita no go-live, com saida manual.
+das demais marcas. A lacuna de 1.508 SKUs e aceita no go-live, com saida manual.
 
 ### D8 — Alembic agora (ADR-006)
 
@@ -231,7 +231,7 @@ env var), comparacao em tempo constante. Nao expostos no frontend.
 |---|---|---|
 | `POST /sync/runs` | `tipo`, `origem` | abre a execucao e devolve o id |
 | `POST /sync/produtos` | lote de ate 500 produtos | upsert por `codigo` |
-| `POST /sync/nf` | lote de NFs com itens | upsert por `chave_nfe`, com fallback `(cnpj_fornecedor, serie, numero)` |
+| `POST /sync/nf` | lote de NFs com itens | upsert por `chave_nfe`, com fallback `(serie, numero)` |
 | `GET /sync/requests/pending` | - | devolve o pedido mais antigo ou 204 |
 | `POST /sync/runs/{id}/finish` | contagens, status, erros, `request_id` | fecha a execucao e atende o pedido |
 
@@ -302,23 +302,30 @@ silencio e para que o relatorio de import saiba o que pode alterar.
 
 ### 6.2 `notas_fiscais`
 
-`numero` sozinho **nao e chave**: dois fornecedores podem emitir a NF 1234 no mesmo dia.
+A nota e de **saida**: a empresa emite e o cliente recebe. O emitente e sempre a propria
+empresa, entao o numero e sequencial **por serie** — `numero` sozinho nao identifica a
+nota, e a chave de acesso (`chave_nfe`) e a identificacao definitiva.
 
 | Campo | Mudanca |
 |---|---|
 | `chave_nfe` | novo `String(44)`, unique, nullable |
 | `serie` | novo `String(10)`, nullable |
-| `cnpj_fornecedor` | novo `String(14)`, nullable |
+| `cliente` | novo `String`, NOT NULL (veio de `destinatario`) |
+| `cnpj_cliente` | novo `String(14)`, nullable |
 | `data_emissao` | novo `Date`, nullable |
 | `atualizado_em` | novo `timestamp` |
+| `fornecedor` | **removido** — nao existe contraparte de compra neste fluxo |
+| `destinatario` | **renomeado** para `cliente` |
 | `numero` | **perde o `unique` global**; continua indexado |
 
-Indice unico composto `(cnpj_fornecedor, serie, numero)`; Postgres permite multiplos `NULL`,
-entao as NFs antigas (sem CNPJ/serie) continuam validas sem colidir entre si.
+Constraint unica `(serie, numero)`; Postgres permite multiplos `NULL`, entao as NFs antigas
+(sem serie) continuam validas. `chave_nfe` unica por cima de tudo.
 
-Manter o `unique` global em `numero` anularia a chave composta: o segundo fornecedor que
-emitisse a NF 1234 seria rejeitado. A constraint foi removida na migracao inicial
-(revisao da ADR-006).
+Correcao registrada na revisao `9f2c41b7a6d3`: a primeira versao do schema tratava a nota
+como compra de fornecedor (`fornecedor` + `destinatario` + unicidade por
+`cnpj_fornecedor`). O fluxo real e de expedicao para cliente. Se um dia houver mais de uma
+filial emitindo, entra `cnpj_emitente` e a constraint vira
+`(cnpj_emitente, serie, numero)`.
 
 ### 6.3 Tabelas de controle
 
@@ -391,7 +398,7 @@ mentira, nao com sync real.
 | Driver do banco do ERP desconhecido (Postgres/MySQL/SQL Server) | atrasa a fase 3 | fase 1 e 4 nao dependem disso; confirmar antes de comecar o agente |
 | 1.508 SKUs sem DUN14 | bipagem manual nesses itens | botao "+1 Caixa", CRUD de EAN, coleta de fichas |
 | 15 codigos das fichas com DV invalido | import rejeita a linha | relatorio aponta linha e motivo; correcao na origem |
-| `numero` de NF colidindo entre fornecedores | sync sobrescreve NF errada | `chave_nfe` como chave; indice composto de fallback |
+| `numero` de NF repetido em series diferentes | sync sobrescreve NF errada | `chave_nfe` como chave; fallback `(serie, numero)` |
 | Sync noturno reescrevendo NF em conferencia | perda de bipagem | regra de D4: sync ignora NF fora de `pendente` |
 | Agente parado sem ninguem notar | catalogo e NFs velhos | `sync_runs` + painel; alerta por ultima execucao |
 | Perda de bipagem sem rede (ADR-004) | operacao perdida | fase 6 (fila offline); ate la a operacao exige conexao |
@@ -401,7 +408,7 @@ mentira, nao com sync real.
 
 ## 10. Pendencias de dados (nao de codigo)
 
-- Fichas tecnicas dos demais fornecedores (1.508 SKUs sem codigo de caixa).
+- Fichas tecnicas das demais marcas/linhas (1.508 SKUs sem codigo de caixa).
 - Correcao na origem dos 15 codigos com DV invalido e dos 2 com tamanho errado.
 - Definicao de quem corrige as 24 divergencias de `CX MASTER` no ERP.
 - Endereco dos 1.381 SKUs sem localizacao.

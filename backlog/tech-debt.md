@@ -63,7 +63,7 @@ Nenhum item em aberto. Os cinco foram resolvidos na fase 0 (ver **Itens resolvid
 - 491 de 1.997 SKUs tem DUN14 nas fichas tecnicas; faltam 1.508.
 - **Impacto:** a bipagem da caixa nao tem codigo para tres de cada quatro produtos. O
   operador depende do botao "+1 Caixa".
-- **Correcao:** coletar fichas dos demais fornecedores.
+- **Correcao:** coletar as fichas das demais marcas/linhas.
 - **Parcial (2026-10-22):** o import de fichas e o CRUD manual de EAN
   (`PUT /wms/products/{id}/ean`, tela WMS > Codigos) estao prontos. O que falta e dado,
   nao codigo.
@@ -224,7 +224,7 @@ Nenhum item em aberto. Os cinco foram resolvidos na fase 0 (ver **Itens resolvid
 
 ### P1-10 `notas_fiscais.numero` nao e chave natural
 - **Resolvido em:** 2026-10-22 (fase 1).
-- `chave_nfe` unica (44) + indice composto `(cnpj_fornecedor, serie, numero)`.
+- `chave_nfe` unica (44) + constraint `(serie, numero)` (NF de saida, emitente unico).
 - O `unique` global em `numero` foi removido: mante-lo anularia a chave composta.
 
 ### P2-13 Decoder de localizacao quebra com endereco fora do padrao

@@ -90,7 +90,7 @@ users ──┬── notas_fiscais ──┬── nf_itens ──── produc
 |---|---|
 | `users` | id, nome, email (unique), senha_hash, perfil (enum), ativo |
 | `products` | id, codigo (unique), referencia, descricao, qtd_embalagem, localizacao, estoque_caixas, codigo_barras_master (unique) |
-| `notas_fiscais` | id, numero (unique), fornecedor, destinatario, endereco, status (enum), motorista_id, created_at |
+| `notas_fiscais` | id, numero, chave_nfe, serie, cliente, cnpj_cliente, endereco, data_emissao, status (enum), motorista_id, created_at |
 | `nf_itens` | id, nf_id, product_id, qtd_nota, qtd_embalagem, caixas_necessarias, caixas_lidas, conferido |
 | `deliveries` | id, nf_id, motorista_id, status (enum), foto_canhoto_url, motivo_falha, data_reagendamento, created_at |
 

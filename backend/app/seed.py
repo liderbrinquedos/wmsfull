@@ -11,6 +11,7 @@ import sys
 import os
 import time
 import math
+from datetime import date
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -122,11 +123,15 @@ def seed():
         db.flush()
         print("✅ Produtos criados!")
 
-        # ── Notas Fiscais ─────────────────────────────────────────
-        def make_nf(nf_id, numero, fornecedor, destinatario, endereco, motorista_id, itens_data):
+        # ── Notas Fiscais (saida para clientes) ───────────────────
+        def make_nf(nf_id, numero, cliente, cnpj_cliente, endereco, motorista_id, itens_data, seq):
+            # Chave de acesso da NF-e (44 digitos): cUF + AAMM + CNPJ + modelo +
+            # serie + numero + tpEmis + codigo + DV. Valor de demonstracao.
+            chave = f"3524061234567800019955001{seq:09d}1123456780"
             nf = NotaFiscal(
-                id=nf_id, numero=numero, fornecedor=fornecedor,
-                destinatario=destinatario, endereco=endereco,
+                id=nf_id, numero=numero, serie="1", chave_nfe=chave,
+                cliente=cliente, cnpj_cliente=cnpj_cliente, endereco=endereco,
+                data_emissao=date(2024, 6, seq),
                 status="pendente", motorista_id=motorista_id
             )
             db.add(nf)
@@ -139,18 +144,18 @@ def seed():
                     caixas_lidas=0, conferido=False
                 ))
 
-        make_nf("nf1", "NF-2024-001", "Fornecedor X", "Cliente Alpha", "Rua das Flores, 123 - São Paulo/SP", "u4", [
+        make_nf("nf1", "NF-2024-001", "Cliente Alpha LTDA", "11222333000181", "Rua das Flores, 123 - São Paulo/SP", "u4", [
             ("i1", "p1", 12, 6),   # 12 ÷ 6 = 2 caixas
             ("i2", "p2", 24, 12),  # 24 ÷ 12 = 2 caixas
-        ])
-        make_nf("nf2", "NF-2024-002", "Fornecedor Y", "Cliente Beta", "Av. Paulista, 456 - São Paulo/SP", "u5", [
+        ], 1)
+        make_nf("nf2", "NF-2024-002", "Cliente Beta ME", "22333444000172", "Av. Paulista, 456 - São Paulo/SP", "u5", [
             ("i3", "p3", 8,  4),   # 8 ÷ 4 = 2 caixas
             ("i4", "p4", 48, 24),  # 48 ÷ 24 = 2 caixas
-        ])
-        make_nf("nf3", "NF-2024-003", "Fornecedor Z", "Cliente Gamma", "Rua XV de Novembro, 789 - Curitiba/PR", "u4", [
+        ], 2)
+        make_nf("nf3", "NF-2024-003", "Cliente Gamma SA", "33444555000163", "Rua XV de Novembro, 789 - Curitiba/PR", "u4", [
             ("i5", "p5", 16, 8),   # 16 ÷ 8 = 2 caixas
             ("i6", "p1", 6,  6),   # 6 ÷ 6 = 1 caixa
-        ])
+        ], 3)
 
         db.commit()
         print("✅ Notas Fiscais criadas!")

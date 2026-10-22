@@ -47,26 +47,24 @@ class ItemERP:
 @dataclass
 class NotaERP:
     numero: str
-    fornecedor: str
+    cliente: str
     chave_nfe: str | None = None
     serie: str | None = None
-    cnpj_fornecedor: str | None = None
-    destinatario: str | None = None
+    cnpj_cliente: str | None = None
     endereco: str | None = None
     data_emissao: date | None = None
     itens: list[ItemERP] = field(default_factory=list)
 
     def chave(self) -> str:
-        return self.chave_nfe or f"{self.cnpj_fornecedor or '-'}/{self.serie or '-'}/{self.numero}"
+        return self.chave_nfe or f"{self.serie or '-'}/{self.numero}"
 
     def para_payload(self) -> dict:
         return {
             "numero": self.numero,
             "chave_nfe": self.chave_nfe,
             "serie": self.serie,
-            "cnpj_fornecedor": self.cnpj_fornecedor,
-            "fornecedor": self.fornecedor,
-            "destinatario": self.destinatario,
+            "cnpj_cliente": self.cnpj_cliente,
+            "cliente": self.cliente,
             "endereco": self.endereco,
             "data_emissao": self.data_emissao.isoformat() if self.data_emissao else None,
             "itens": [item.para_payload() for item in self.itens],
@@ -159,8 +157,8 @@ class PostgresERP(FonteERP):
             with conexao.cursor(cursor_factory=cursor_factory) as cur:
                 cur.execute(
                     f"""
-                    SELECT chave_nfe, numero, serie, cnpj_fornecedor, fornecedor,
-                           destinatario, endereco, data_emissao,
+                    SELECT chave_nfe, numero, serie, cnpj_cliente, cliente,
+                           endereco, data_emissao,
                            codigo_produto, qtd_nota, qtd_embalagem
                       FROM {self.view_nf}
                      WHERE data_emissao >= %s
@@ -209,8 +207,7 @@ def _agrupar_notas(linhas: Iterable[dict]) -> Iterable[NotaERP]:
         numero = _texto(linha.get("numero")) or ""
         chave_nfe = _texto(linha.get("chave_nfe"))
         serie = _texto(linha.get("serie"))
-        cnpj = _texto(linha.get("cnpj_fornecedor"))
-        chave = chave_nfe or f"{cnpj or '-'}/{serie or '-'}/{numero}"
+        chave = chave_nfe or f"{serie or '-'}/{numero}"
 
         nota = por_chave.get(chave)
         if nota is None:
@@ -218,9 +215,8 @@ def _agrupar_notas(linhas: Iterable[dict]) -> Iterable[NotaERP]:
                 numero=numero,
                 chave_nfe=chave_nfe,
                 serie=serie,
-                cnpj_fornecedor=cnpj,
-                fornecedor=_texto(linha.get("fornecedor")) or "",
-                destinatario=_texto(linha.get("destinatario")),
+                cnpj_cliente=_texto(linha.get("cnpj_cliente")),
+                cliente=_texto(linha.get("cliente")) or "",
                 endereco=_texto(linha.get("endereco")),
                 data_emissao=_data(linha.get("data_emissao")),
             )

@@ -135,9 +135,9 @@ export const DeliveryPage: React.FC = () => {
                     </div>
 
                     <div style={{ marginTop: '8px' }}>
-                      <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Cliente / Destinatário</span>
+                      <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Cliente</span>
                       <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff' }}>
-                        {nf.destinatario || 'Cliente Balcão'}
+                        {nf.cliente || 'Cliente Balcão'}
                       </div>
                     </div>
 
@@ -146,7 +146,8 @@ export const DeliveryPage: React.FC = () => {
                     </div>
 
                     <div style={{ marginTop: '8px', fontSize: '0.82rem', color: 'var(--text-dim)' }}>
-                      Total de Carga: <strong style={{ color: '#fff' }}>{totalCaixas} caixas master</strong> · Fornecedor: {nf.fornecedor}
+                      Total de Carga: <strong style={{ color: '#fff' }}>{totalCaixas} caixas master</strong>
+                      {nf.cnpj_cliente && <span> · CNPJ {nf.cnpj_cliente}</span>}
                     </div>
 
                     {user?.perfil !== 'motorista' && nf.motorista && (

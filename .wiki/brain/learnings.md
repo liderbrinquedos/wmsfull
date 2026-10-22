@@ -132,9 +132,9 @@
   o dono depois.
 
 ### Coluna `unique` global anulava a chave composta
-- `notas_fiscais.numero` era unico isoladamente. A chave composta
-  `(cnpj_fornecedor, serie, numero)` nao serviria para nada enquanto o `unique` global
-  existisse: o segundo fornecedor com NF 1234 seria rejeitado. O `unique` saiu.
+- `notas_fiscais.numero` era unico isoladamente. A numeracao da NF e sequencial por serie,
+  entao duas series podem ter a NF 1234: com o `unique` global a segunda seria rejeitada.
+  O `unique` saiu e entrou `(serie, numero)`.
 
 ---
 
@@ -147,8 +147,8 @@
 - A excecao precisa ser capturada **fora** do `with`, senao o savepoint nao e liberado.
 
 ### Upsert por `chave_nfe` precisa de fallback, mas o fallback pode ser ambiguo
-- Buscar so por `numero` pode devolver mais de uma nota (dois fornecedores, mesmo numero).
-  Nesse caso a API recusa e pede `chave_nfe` ou `(cnpj_fornecedor, serie)`. Escolher "a
+- Buscar so por `numero` pode devolver mais de uma nota (mesmo numero em series
+  diferentes). Nesse caso a API recusa e pede `chave_nfe` ou `serie`. Escolher "a
   primeira" silenciosamente sobrescreveria a nota errada.
 
 ### `openpyxl` e obrigatorio no container, nao no host
@@ -184,6 +184,22 @@
 - O dump foi restaurado em um banco descartavel (`logfull_restore`) e conferido
   (produtos, notas, versao do Alembic) antes de o procedimento entrar no playbook.
 - `pg_dump` pode gravar arquivo vazio sem falhar: o script checa o tamanho do dump.
+
+---
+
+## 2026-10-22 - Correcao de dominio (NF de saida para cliente)
+
+### O modelo estava do lado errado da nota
+- A NF foi modelada como **compra de fornecedor** (`fornecedor`, `destinatario`,
+  unicidade por `cnpj_fornecedor`). O fluxo real e **venda**: a empresa emite a nota e
+  entrega ao cliente; os produtos sao dela.
+- Sintoma que denunciou: o vocabulario nao fechava. "Fornecedor" e "destinatario" na
+  mesma nota, e um campo `destinatario` que ja era o cliente de verdade.
+- Corrigido na revisao `9f2c41b7a6d3`: `destinatario` -> `cliente` (preservando os
+  dados), `fornecedor` removido, `cnpj_fornecedor` -> `cnpj_cliente`, unicidade
+  `(serie, numero)`.
+- Licao: **antes de modelar, perguntar o sentido do documento** (quem emite, quem
+  recebe). Nome de campo errado contamina API, agente, tela e relatorio.
 
 ### `@tanstack/react-query` declarado e nao usado
 - Nao ha `QueryClientProvider` nem `useQuery`/`useMutation` em lugar nenhum. Todo o

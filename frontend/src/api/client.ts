@@ -41,9 +41,12 @@ export interface NFItem {
 export interface NotaFiscal {
   id: string;
   numero: string;
-  fornecedor: string;
-  destinatario?: string;
+  serie?: string | null;
+  chave_nfe?: string | null;
+  cliente: string;
+  cnpj_cliente?: string | null;
   endereco?: string;
+  data_emissao?: string | null;
   status: 'pendente' | 'em_conferencia' | 'conferida' | 'em_entrega' | 'entregue' | 'reagendado';
   motorista_id?: string;
   motorista?: User;

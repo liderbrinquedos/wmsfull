@@ -11,23 +11,20 @@ from app.core.database import Base
 class NotaFiscal(Base):
     __tablename__ = "notas_fiscais"
 
-    # `numero` sozinho nao identifica uma NF: dois fornecedores podem emitir a
-    # NF 1234 no mesmo dia. A chave natural e `chave_nfe`; quando ela nao vier,
-    # a combinacao (cnpj_fornecedor, serie, numero) desempata.
+    # A NF aqui e de SAIDA: a empresa emite e o cliente recebe. Sendo um unico
+    # emitente, o numero e sequencial por serie; a chave natural mesmo e
+    # `chave_nfe`. Se um dia houver mais de uma filial emitindo, entra
+    # `cnpj_emitente` e a constraint vira (cnpj_emitente, serie, numero).
     __table_args__ = (
-        UniqueConstraint(
-            "cnpj_fornecedor", "serie", "numero",
-            name="uq_nf_fornecedor_serie_numero",
-        ),
+        UniqueConstraint("serie", "numero", name="uq_nf_serie_numero"),
     )
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     numero = Column(String, nullable=False, index=True)
     chave_nfe = Column(String(44), unique=True, nullable=True)
     serie = Column(String(10), nullable=True)
-    cnpj_fornecedor = Column(String(14), nullable=True)
-    fornecedor = Column(String, nullable=False)
-    destinatario = Column(String, nullable=True)
+    cliente = Column(String, nullable=False)
+    cnpj_cliente = Column(String(14), nullable=True)
     endereco = Column(String, nullable=True)
     data_emissao = Column(Date, nullable=True)
     status = Column(

@@ -242,10 +242,11 @@ users ──┬── notas_fiscais ──┬── nf_itens ──── produc
 | Tabela | Papel |
 |---|---|
 | `users` | Usuarios com `perfil` (admin, supervisor, operador, motorista) e `ativo` |
-| `products` | Catalogo com `qtd_embalagem`, `localizacao`, `estoque_caixas`, `codigo_barras_master` |
-| `notas_fiscais` | Nota com maquina de status e `motorista_id` atribuido |
+| `products` | Catalogo com `qtd_embalagem`, `localizacao`, `estoque_caixas`, `ean13`, `ean14` |
+| `notas_fiscais` | NF de **saida** para o cliente (`cliente`, `cnpj_cliente`, `serie`, `chave_nfe`), com a maquina de status e `motorista_id` |
 | `nf_itens` | Item da nota: `qtd_nota`, `caixas_necessarias`, `caixas_lidas`, `conferido` |
 | `deliveries` | Baixa de entrega: status, `foto_canhoto_url`, `motivo_falha`, `data_reagendamento` |
+| `sync_runs` / `sync_run_errors` / `sync_requests` | Controle da ingestao (execucao, erro por item, pedido manual) |
 
 Enums nativos do PostgreSQL: `perfil_enum`, `nf_status_enum`, `delivery_status_enum`.
 

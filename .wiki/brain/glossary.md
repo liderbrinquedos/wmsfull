@@ -5,7 +5,11 @@
 | Termo | Significado |
 |---|---|
 | **WMS** | Warehouse Management System - modulo de armazem: catalogo, localizacao e estoque |
-| **NF** | Nota Fiscal. Unidade central do sistema; carrega o status do fluxo operacional |
+| **NF** | Nota Fiscal de **saida**: a empresa emite e o cliente recebe. Unidade central do sistema; carrega o status do fluxo operacional |
+| **Cliente** | Destinatario da NF. E o dono do endereco de entrega, nao um fornecedor |
+| **Chave da NF-e** | 44 digitos que identificam a nota em todo o pais. E a chave natural do sync |
+| **Serie** | Sequencia de numeracao da NF. Junto com `numero`, e unica por emitente |
+| **Fornecedor** | Nao existe neste fluxo. O WMSFull trata expedicao para clientes; compras nao entram no sistema |
 | **NFItem** | Item (produto + quantidade) dentro de uma nota fiscal |
 | **Caixa master** | Embalagem padrao do produto. `qtd_embalagem` = unidades dentro de uma caixa |
 | **Caixa necessaria** | `ceil(qtd_nota / qtd_embalagem)` - quantas caixas master a nota exige |

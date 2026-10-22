@@ -18,7 +18,8 @@ plano de producao aprovado em
 
 - `products.ean13`, `products.ean14`, `products.ean13_origem`, `products.ean14_origem`,
   `products.atualizado_em`;
-- `notas_fiscais.chave_nfe`, `serie`, `cnpj_fornecedor`, `data_emissao`, `atualizado_em`;
+- `notas_fiscais.chave_nfe`, `serie`, `cliente`, `cnpj_cliente`, `data_emissao`,
+  `atualizado_em`;
 - tres tabelas de controle de ingestao (`sync_runs`, `sync_run_errors`, `sync_requests`);
 - `products.qtd_embalagem` deixa de aceitar vazio (`NOT NULL default 1`).
 
@@ -71,10 +72,16 @@ Ajustes feitos na revisao da migracao gerada:
    `perfil_enum`, `nf_status_enum` e `delivery_status_enum`; sem o drop explicito, um
    novo `upgrade head` falha com `type ... already exists`. O ciclo
    `downgrade base` -> `upgrade head` foi testado.
-2. **`notas_fiscais.numero` perdeu o `unique`.** Manter a constraint global anularia o
-   motivo de existir da chave composta: o segundo fornecedor que emitisse a NF 1234
-   seria rejeitado. Ficaram `chave_nfe` unica e
-   `uq_nf_fornecedor_serie_numero`; `numero` continua indexado para busca.
+2. **`notas_fiscais.numero` perdeu o `unique`.** A numeracao da NF e sequencial por
+   serie, entao duas series podem ter a NF 1234: manter o `unique` global rejeitaria a
+   segunda. Ficaram `chave_nfe` unica e `uq_nf_serie_numero`; `numero` continua indexado
+   para busca.
+
+3. **A nota e de saida, para cliente** (revisao `9f2c41b7a6d3`). A primeira versao do
+   schema modelava a NF como compra de fornecedor (`fornecedor` + `destinatario` +
+   unicidade por `cnpj_fornecedor`), o que nao corresponde ao fluxo: a empresa emite a
+   nota e entrega ao cliente. `destinatario` virou `cliente`, `fornecedor` saiu e
+   `cnpj_fornecedor` virou `cnpj_cliente`.
 
 O `migrate` usa a mesma imagem da API e `restart: "no"`; a `api` depende dele com
 `condition: service_completed_successfully`.

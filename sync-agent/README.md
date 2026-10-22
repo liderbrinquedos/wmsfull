@@ -44,21 +44,23 @@ fica em um `CREATE OR REPLACE VIEW`, e nao no agente.
 | `ean13` | texto (13 digitos) | nao |
 | `qtd_embalagem` | inteiro >= 1 | nao |
 
-### `wms_nf_itens` (uma linha por item de nota)
+### `wms_nf_itens` (uma linha por item de nota de saida)
 
 | Coluna | Tipo | Obrigatoria |
 |---|---|---|
-| `chave_nfe` | texto (44 digitos) | recomendada |
+| `chave_nfe` | texto (44 digitos) | recomendada (e a chave natural) |
 | `numero` | texto | sim |
 | `serie` | texto | recomendada |
-| `cnpj_fornecedor` | texto (14 digitos) | recomendada |
-| `fornecedor` | texto | sim |
-| `destinatario` | texto | nao |
-| `endereco` | texto | nao |
+| `cnpj_cliente` | texto (14 digitos) | recomendada |
+| `cliente` | texto | sim |
+| `endereco` | texto (endereco de entrega) | nao |
 | `data_emissao` | data | sim (usada na janela) |
 | `codigo_produto` | texto (igual a `wms_produtos.codigo`) | sim |
 | `qtd_nota` | inteiro | sim |
 | `qtd_embalagem` | inteiro | nao |
+
+> A nota e de **saida**: a empresa emite e o cliente recebe. Nao existe coluna de
+> fornecedor — o emitente e sempre a propria empresa.
 
 Exemplo de criacao (ajustar nomes de tabela/coluna ao ERP real):
 
@@ -76,17 +78,16 @@ CREATE OR REPLACE VIEW wms_nf_itens AS
 SELECT n.chave_nfe::text   AS chave_nfe,
        n.numero::text      AS numero,
        n.serie::text       AS serie,
-       f.cnpj::text        AS cnpj_fornecedor,
-       f.razao_social      AS fornecedor,
-       n.destinatario      AS destinatario,
-       n.endereco          AS endereco,
+       c.cnpj::text        AS cnpj_cliente,
+       c.razao_social      AS cliente,
+       n.endereco_entrega  AS endereco,
        n.data_emissao      AS data_emissao,
        i.codigo_produto::text AS codigo_produto,
        i.quantidade::int   AS qtd_nota,
        i.qtd_embalagem::int AS qtd_embalagem
   FROM notas n
-  JOIN itens i        ON i.nota_id = n.id
-  JOIN fornecedores f ON f.id = n.fornecedor_id;
+  JOIN itens i     ON i.nota_id = n.id
+  JOIN clientes c  ON c.id = n.cliente_id;
 ```
 
 ### Usuario somente leitura

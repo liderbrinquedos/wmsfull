@@ -85,9 +85,12 @@ class NFItemOut(BaseModel):
 class NFOut(BaseModel):
     id: str
     numero: str
-    fornecedor: str
-    destinatario: Optional[str]
+    serie: Optional[str] = None
+    chave_nfe: Optional[str] = None
+    cliente: str
+    cnpj_cliente: Optional[str] = None
     endereco: Optional[str]
+    data_emissao: Optional[date] = None
     status: str
     motorista_id: Optional[str]
     motorista: Optional[UserOut] = None

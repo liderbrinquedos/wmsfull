@@ -86,7 +86,7 @@ atualiza o item na lista local + recarrega apenas /wms/stats
 GET /conference/nf?status=...
    │
    ▼
-cards de NF (numero, fornecedor, destinatario, endereco, progresso, itens)
+cards de NF (numero, serie, cliente, endereco, progresso, itens)
    │
    │  [Iniciar Conferencia]  (status = pendente)
    ▼

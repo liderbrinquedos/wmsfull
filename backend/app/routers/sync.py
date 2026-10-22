@@ -61,8 +61,8 @@ def _motivo_integridade(exc: IntegrityError) -> str:
         return "ean14 ja cadastrado em outro produto"
     if "chave_nfe" in texto:
         return "chave_nfe ja cadastrada em outra nota"
-    if "uq_nf_fornecedor_serie_numero" in texto:
-        return "ja existe nota com este fornecedor/serie/numero"
+    if "uq_nf_serie_numero" in texto:
+        return "ja existe nota com esta serie e numero"
     if "products_codigo" in texto or "ix_products_codigo" in texto:
         return "codigo de produto duplicado"
     return "violacao de integridade no banco"
@@ -120,11 +120,10 @@ def _localizar_nf(db: Session, item: NFSyncIn) -> Optional[NotaFiscal]:
         if nf:
             return nf
 
-    if item.cnpj_fornecedor and item.serie:
+    if item.serie:
         return (
             db.query(NotaFiscal)
             .filter(
-                NotaFiscal.cnpj_fornecedor == item.cnpj_fornecedor,
                 NotaFiscal.serie == item.serie,
                 NotaFiscal.numero == item.numero,
             )
@@ -134,7 +133,7 @@ def _localizar_nf(db: Session, item: NFSyncIn) -> Optional[NotaFiscal]:
     candidatas = db.query(NotaFiscal).filter(NotaFiscal.numero == item.numero).all()
     if len(candidatas) > 1:
         raise _Skip(
-            "numero de NF ambiguo entre fornecedores: envie chave_nfe ou (cnpj_fornecedor, serie)"
+            "numero de NF repetido em series diferentes: envie chave_nfe ou serie"
         )
     return candidatas[0] if candidatas else None
 
@@ -147,14 +146,12 @@ def _gravar_nf(db: Session, item: NFSyncIn) -> list[str]:
         raise _Skip(f"NF {nf.numero} esta em '{nf.status}': sync ignorado")
 
     if nf is None:
-        nf = NotaFiscal(numero=item.numero, fornecedor=item.fornecedor, status="pendente")
+        nf = NotaFiscal(numero=item.numero, cliente=item.cliente, status="pendente")
         db.add(nf)
         db.flush()
 
     nf.numero = item.numero
-    nf.fornecedor = item.fornecedor
-    if item.destinatario is not None:
-        nf.destinatario = item.destinatario
+    nf.cliente = item.cliente
     if item.endereco is not None:
         nf.endereco = item.endereco
     if item.data_emissao is not None:
@@ -163,8 +160,8 @@ def _gravar_nf(db: Session, item: NFSyncIn) -> list[str]:
         nf.chave_nfe = item.chave_nfe
     if item.serie:
         nf.serie = item.serie
-    if item.cnpj_fornecedor:
-        nf.cnpj_fornecedor = item.cnpj_fornecedor
+    if item.cnpj_cliente:
+        nf.cnpj_cliente = item.cnpj_cliente
 
     # A NF ainda esta pendente, entao nada foi bipado: substituir os itens e seguro.
     db.query(NFItem).filter(NFItem.nf_id == nf.id).delete()

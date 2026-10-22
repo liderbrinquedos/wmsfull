@@ -133,7 +133,7 @@ O que ja existe:
   one-shot `logfull-migrate`;
 - `products.ean13`, `products.ean14` e as colunas de origem (`ean13_origem`,
   `ean14_origem`);
-- `notas_fiscais.chave_nfe`, `serie`, `cnpj_fornecedor`, `data_emissao`;
+- `notas_fiscais.chave_nfe`, `serie`, `cliente`, `cnpj_cliente`, `data_emissao`;
 - tabelas de controle `sync_runs`, `sync_run_errors` e `sync_requests` (vazias);
 - bipagem por `ean14` e pelo `codigo_barras_master` legado; `ean13` e recusado com
   mensagem explicita;

@@ -31,9 +31,8 @@ class NFSyncIn(BaseModel):
     numero: str
     chave_nfe: Optional[str] = None
     serie: Optional[str] = None
-    cnpj_fornecedor: Optional[str] = None
-    fornecedor: str
-    destinatario: Optional[str] = None
+    cliente: str
+    cnpj_cliente: Optional[str] = None
     endereco: Optional[str] = None
     data_emissao: Optional[date] = None
     itens: list[NFItemSyncIn] = Field(default_factory=list)

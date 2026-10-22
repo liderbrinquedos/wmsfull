@@ -42,8 +42,8 @@ execucao acontece assim que o agente inicia.
 O detalhe (colunas, tipos e SQL de exemplo) esta em `sync-agent/README.md`. Resumo:
 
 - `wms_produtos(codigo, referencia, descricao, ean13, qtd_embalagem)`
-- `wms_nf_itens(chave_nfe, numero, serie, cnpj_fornecedor, fornecedor, destinatario,
-  endereco, data_emissao, codigo_produto, qtd_nota, qtd_embalagem)`
+- `wms_nf_itens(chave_nfe, numero, serie, cnpj_cliente, cliente, endereco,
+  data_emissao, codigo_produto, qtd_nota, qtd_embalagem)` — nota de saida
 
 O usuario do banco deve ser **somente leitura** (`GRANT SELECT` nas duas views), e o agente
 abre a conexao em modo `readonly` como segunda barreira.
