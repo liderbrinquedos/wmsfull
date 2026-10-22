@@ -231,7 +231,7 @@ env var), comparacao em tempo constante. Nao expostos no frontend.
 |---|---|---|
 | `POST /sync/runs` | `tipo`, `origem` | abre a execucao e devolve o id |
 | `POST /sync/produtos` | lote de ate 500 produtos | upsert por `codigo` |
-| `POST /sync/nf` | lote de NFs com itens | upsert por `chave_nfe`, com fallback `(serie, numero)` |
+| `POST /sync/nf` | lote de NFs com itens | upsert por `nunota`, depois `chave_nfe`, depois `(codigo_empresa, serie, numero)` |
 | `GET /sync/requests/pending` | - | devolve o pedido mais antigo ou 204 |
 | `POST /sync/runs/{id}/finish` | contagens, status, erros, `request_id` | fecha a execucao e atende o pedido |
 
@@ -302,13 +302,16 @@ silencio e para que o relatorio de import saiba o que pode alterar.
 
 ### 6.2 `notas_fiscais`
 
-A nota e de **saida**: a empresa emite e o cliente recebe. O emitente e sempre a propria
-empresa, entao o numero e sequencial **por serie** — `numero` sozinho nao identifica a
-nota, e a chave de acesso (`chave_nfe`) e a identificacao definitiva.
+A nota e de **saida**: a empresa emite e o cliente recebe. O ERP e o **Sankhya** e a
+mesma base atende **mais de uma empresa**, entao a identidade fiscal e
+`(codigo_empresa, serie, numero)`. O Sankhya ainda tem o `NUNOTA`, numero unico do
+sistema, que e a melhor chave de idempotencia do sync.
 
 | Campo | Mudanca |
 |---|---|
-| `chave_nfe` | novo `String(44)`, unique, nullable |
+| `codigo_empresa` | novo `Integer`, NOT NULL (default 1) — `CODEMP` |
+| `nunota` | novo `Integer`, unique, nullable — identidade do sistema |
+| `chave_nfe` | novo `String(44)`, unique, nullable — `CHAVENFE` |
 | `serie` | novo `String(10)`, nullable |
 | `cliente` | novo `String`, NOT NULL (veio de `destinatario`) |
 | `cnpj_cliente` | novo `String(14)`, nullable |
@@ -318,14 +321,18 @@ nota, e a chave de acesso (`chave_nfe`) e a identificacao definitiva.
 | `destinatario` | **renomeado** para `cliente` |
 | `numero` | **perde o `unique` global**; continua indexado |
 
-Constraint unica `(serie, numero)`; Postgres permite multiplos `NULL`, entao as NFs antigas
-(sem serie) continuam validas. `chave_nfe` unica por cima de tudo.
+Constraint unica `(codigo_empresa, serie, numero)`; Postgres permite multiplos `NULL`,
+entao as NFs antigas (sem serie) continuam validas. `nunota` e `chave_nfe` sao unicas por
+cima disso.
+
+Ordem de identificacao no sync (a primeira que casar vence):
+`nunota` -> `chave_nfe` -> `(codigo_empresa, serie, numero)`.
 
 Correcao registrada na revisao `9f2c41b7a6d3`: a primeira versao do schema tratava a nota
 como compra de fornecedor (`fornecedor` + `destinatario` + unicidade por
-`cnpj_fornecedor`). O fluxo real e de expedicao para cliente. Se um dia houver mais de uma
-filial emitindo, entra `cnpj_emitente` e a constraint vira
-`(cnpj_emitente, serie, numero)`.
+`cnpj_fornecedor`). O fluxo real e de expedicao para cliente. A revisao `3b7d9e1c4a20`
+acrescentou a dimensao de empresa (`CODEMP`) e o `NUNOTA` do Sankhya, porque a base atende
+mais de uma empresa.
 
 ### 6.3 Tabelas de controle
 
@@ -398,7 +405,7 @@ mentira, nao com sync real.
 | Driver do banco do ERP desconhecido (Postgres/MySQL/SQL Server) | atrasa a fase 3 | fase 1 e 4 nao dependem disso; confirmar antes de comecar o agente |
 | 1.508 SKUs sem DUN14 | bipagem manual nesses itens | botao "+1 Caixa", CRUD de EAN, coleta de fichas |
 | 15 codigos das fichas com DV invalido | import rejeita a linha | relatorio aponta linha e motivo; correcao na origem |
-| `numero` de NF repetido em series diferentes | sync sobrescreve NF errada | `chave_nfe` como chave; fallback `(serie, numero)` |
+| `numero` de NF repetido em series/empresas diferentes | sync sobrescreve NF errada | `nunota` como chave; identidade fiscal `(empresa, serie, numero)` |
 | Sync noturno reescrevendo NF em conferencia | perda de bipagem | regra de D4: sync ignora NF fora de `pendente` |
 | Agente parado sem ninguem notar | catalogo e NFs velhos | `sync_runs` + painel; alerta por ultima execucao |
 | Perda de bipagem sem rede (ADR-004) | operacao perdida | fase 6 (fila offline); ate la a operacao exige conexao |

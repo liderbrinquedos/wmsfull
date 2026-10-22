@@ -11,15 +11,23 @@ from app.core.database import Base
 class NotaFiscal(Base):
     __tablename__ = "notas_fiscais"
 
-    # A NF aqui e de SAIDA: a empresa emite e o cliente recebe. Sendo um unico
-    # emitente, o numero e sequencial por serie; a chave natural mesmo e
-    # `chave_nfe`. Se um dia houver mais de uma filial emitindo, entra
-    # `cnpj_emitente` e a constraint vira (cnpj_emitente, serie, numero).
+    # A NF e de SAIDA: a empresa emite e o cliente recebe. Com mais de uma
+    # empresa emitindo, a numeracao da SEFAZ e unica por (empresa, serie).
+    #
+    # Sankhya tem duas identidades e as duas sao uteis:
+    #   NUNOTA  -> numero unico do sistema, garante idempotencia do sync
+    #   NUMNOTA -> numero da nota na SEFAZ, unico por (CODEMP, SERIENOTA)
     __table_args__ = (
-        UniqueConstraint("serie", "numero", name="uq_nf_serie_numero"),
+        UniqueConstraint("nunota", name="uq_nf_nunota"),
+        UniqueConstraint(
+            "codigo_empresa", "serie", "numero",
+            name="uq_nf_empresa_serie_numero",
+        ),
     )
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    codigo_empresa = Column(Integer, nullable=False, default=1)
+    nunota = Column(Integer, nullable=True)
     numero = Column(String, nullable=False, index=True)
     chave_nfe = Column(String(44), unique=True, nullable=True)
     serie = Column(String(10), nullable=True)

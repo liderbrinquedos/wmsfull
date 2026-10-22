@@ -83,6 +83,10 @@ Ajustes feitos na revisao da migracao gerada:
    nota e entrega ao cliente. `destinatario` virou `cliente`, `fornecedor` saiu e
    `cnpj_fornecedor` virou `cnpj_cliente`.
 
+4. **A identidade da NF e do Sankhya** (revisao `3b7d9e1c4a20`). A base atende mais de
+   uma empresa, entao a unicidade passou a ser `(codigo_empresa, serie, numero)`, e o
+   `nunota` (numero unico do sistema) entrou como chave de idempotencia do sync.
+
 O `migrate` usa a mesma imagem da API e `restart: "no"`; a `api` depende dele com
 `condition: service_completed_successfully`.
 

@@ -152,6 +152,8 @@ Qualquer autenticado. Lista as NFs, da mais recente para a mais antiga.
 [
   {
     "id": "nf1",
+    "codigo_empresa": 1,
+    "nunota": 9001,
     "numero": "NF-2024-001",
     "serie": "1",
     "chave_nfe": "35240612345678000199550010000000011123456780",

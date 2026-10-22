@@ -18,7 +18,7 @@ ERP (rede interna)  ->  wmsfull-sync  --HTTPS-->  API publica
 | Dado | Origem | Regra |
 |---|---|---|
 | `codigo`, `referencia`, `descricao`, `ean13`, `qtd_embalagem` | view `wms_produtos` | upsert por `codigo` |
-| NFs + itens | view `wms_nf_itens` (uma linha por item) | upsert por `chave_nfe` |
+| NFs + itens | view `wms_nf_itens` (uma linha por item) | upsert por `nunota`, depois `chave_nfe`, depois `(empresa, serie, numero)` |
 
 O agente **nao** envia e nunca altera `localizacao`, `estoque_caixas` nem `ean14` — esses
 campos sao do WMSFull.
@@ -42,8 +42,9 @@ execucao acontece assim que o agente inicia.
 O detalhe (colunas, tipos e SQL de exemplo) esta em `sync-agent/README.md`. Resumo:
 
 - `wms_produtos(codigo, referencia, descricao, ean13, qtd_embalagem)`
-- `wms_nf_itens(chave_nfe, numero, serie, cnpj_cliente, cliente, endereco,
-  data_emissao, codigo_produto, qtd_nota, qtd_embalagem)` — nota de saida
+- `wms_nf_itens(codigo_empresa, nunota, chave_nfe, numero, serie, cnpj_cliente, cliente,
+  endereco, data_emissao, codigo_produto, qtd_nota, qtd_embalagem)` — nota de saida
+  (Sankhya: `CODEMP`, `NUNOTA`, `CHAVENFE`, `NUMNOTA`, `SERIENOTA`)
 
 O usuario do banco deve ser **somente leitura** (`GRANT SELECT` nas duas views), e o agente
 abre a conexao em modo `readonly` como segunda barreira.

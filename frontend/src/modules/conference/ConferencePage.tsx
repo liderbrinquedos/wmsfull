@@ -101,6 +101,9 @@ export const ConferencePage: React.FC = () => {
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <h3 style={{ fontSize: '1.2rem', color: '#fff' }}>{nf.numero}</h3>
+                      <span style={{ fontSize: '0.78rem', color: 'var(--text-dim)' }}>
+                        Emp. {nf.codigo_empresa}{nf.serie ? ` · Série ${nf.serie}` : ''}
+                      </span>
                       <span className={`badge badge-${nf.status}`}>
                         {nf.status.replace('_', ' ')}
                       </span>

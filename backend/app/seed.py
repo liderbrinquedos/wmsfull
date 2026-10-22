@@ -130,6 +130,7 @@ def seed():
             chave = f"3524061234567800019955001{seq:09d}1123456780"
             nf = NotaFiscal(
                 id=nf_id, numero=numero, serie="1", chave_nfe=chave,
+                codigo_empresa=1, nunota=9000 + seq,
                 cliente=cliente, cnpj_cliente=cnpj_cliente, endereco=endereco,
                 data_emissao=date(2024, 6, seq),
                 status="pendente", motorista_id=motorista_id

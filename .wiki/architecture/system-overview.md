@@ -77,7 +77,7 @@ users ──┬── notas_fiscais ──┬── nf_itens ──── produc
 |---|---|---|
 | `users` | id, nome, email, senha_hash, perfil, ativo | `email` unique; `perfil` ENUM |
 | `products` | id, codigo, referencia, descricao, qtd_embalagem, localizacao, estoque_caixas, ean13, ean14, ean13_origem, ean14_origem, codigo_barras_master, atualizado_em | `codigo`, `ean13`, `ean14` e `codigo_barras_master` unique; `localizacao` aceita nulo |
-| `notas_fiscais` | id, numero, chave_nfe, serie, cliente, cnpj_cliente, endereco, data_emissao, status, motorista_id, created_at, atualizado_em | NF de saida para cliente; `chave_nfe` unique; `(serie, numero)` unique; `numero` indexado; `status` ENUM; FK -> users |
+| `notas_fiscais` | id, codigo_empresa, nunota, numero, chave_nfe, serie, cliente, cnpj_cliente, endereco, data_emissao, status, motorista_id, created_at, atualizado_em | NF de saida para cliente; `nunota` e `chave_nfe` unique; `(codigo_empresa, serie, numero)` unique; `status` ENUM; FK -> users |
 | `nf_itens` | id, nf_id, product_id, qtd_nota, qtd_embalagem, caixas_necessarias, caixas_lidas, conferido | FK -> notas_fiscais, products |
 | `deliveries` | id, nf_id, motorista_id, status, foto_canhoto_url, motivo_falha, data_reagendamento, created_at | `status` ENUM; FK -> notas_fiscais, users |
 | `sync_runs` | id, tipo, origem, status, iniciado_em, finalizado_em, lidos, gravados, erros, arquivo, mensagem, solicitado_por | controle de ingestao; FK -> users |

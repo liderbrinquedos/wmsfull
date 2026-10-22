@@ -46,21 +46,26 @@ fica em um `CREATE OR REPLACE VIEW`, e nao no agente.
 
 ### `wms_nf_itens` (uma linha por item de nota de saida)
 
-| Coluna | Tipo | Obrigatoria |
-|---|---|---|
-| `chave_nfe` | texto (44 digitos) | recomendada (e a chave natural) |
-| `numero` | texto | sim |
-| `serie` | texto | recomendada |
-| `cnpj_cliente` | texto (14 digitos) | recomendada |
-| `cliente` | texto | sim |
-| `endereco` | texto (endereco de entrega) | nao |
-| `data_emissao` | data | sim (usada na janela) |
-| `codigo_produto` | texto (igual a `wms_produtos.codigo`) | sim |
-| `qtd_nota` | inteiro | sim |
-| `qtd_embalagem` | inteiro | nao |
+| Coluna | Tipo | Obrigatoria | Sankhya |
+|---|---|---|---|
+| `codigo_empresa` | inteiro | sim | `CODEMP` |
+| `nunota` | inteiro | recomendada | `NUNOTA` (unico no sistema) |
+| `chave_nfe` | texto (44 digitos) | recomendada | `CHAVENFE` |
+| `numero` | texto | sim | `NUMNOTA` |
+| `serie` | texto | sim | `SERIENOTA` |
+| `cnpj_cliente` | texto (14 digitos) | recomendada | `TGFPAR.CGC_CPF` |
+| `cliente` | texto | sim | `TGFPAR.NOMEPARC` |
+| `endereco` | texto (endereco de entrega) | nao | - |
+| `data_emissao` | data | sim (usada na janela) | `TGFCAB.DTNEG` |
+| `codigo_produto` | texto (igual a `wms_produtos.codigo`) | sim | `TGFITE.CODPROD` |
+| `qtd_nota` | inteiro | sim | `TGFITE.QTDNEG` |
+| `qtd_embalagem` | inteiro | nao | - |
 
 > A nota e de **saida**: a empresa emite e o cliente recebe. Nao existe coluna de
 > fornecedor — o emitente e sempre a propria empresa.
+>
+> `NUNOTA` e a identidade que evita duplicidade; `(codigo_empresa, serie, numero)` e a
+> identidade fiscal. O agente envia as duas e a API tenta `nunota` primeiro.
 
 Exemplo de criacao (ajustar nomes de tabela/coluna ao ERP real):
 
@@ -75,20 +80,25 @@ SELECT codigo::text        AS codigo,
  WHERE ativo = 'S';
 
 CREATE OR REPLACE VIEW wms_nf_itens AS
-SELECT n.chave_nfe::text   AS chave_nfe,
-       n.numero::text      AS numero,
-       n.serie::text       AS serie,
-       c.cnpj::text        AS cnpj_cliente,
-       c.razao_social      AS cliente,
+SELECT n.codemp::int       AS codigo_empresa,
+       n.nunota::int       AS nunota,
+       n.chavenfe::text    AS chave_nfe,
+       n.numnota::text     AS numero,
+       n.serienota::text   AS serie,
+       c.cgc_cpf::text     AS cnpj_cliente,
+       c.nomeparc          AS cliente,
        n.endereco_entrega  AS endereco,
-       n.data_emissao      AS data_emissao,
-       i.codigo_produto::text AS codigo_produto,
-       i.quantidade::int   AS qtd_nota,
+       n.dtneg             AS data_emissao,
+       i.codprod::text     AS codigo_produto,
+       i.qtdneg::int       AS qtd_nota,
        i.qtd_embalagem::int AS qtd_embalagem
-  FROM notas n
-  JOIN itens i     ON i.nota_id = n.id
-  JOIN clientes c  ON c.id = n.cliente_id;
+  FROM tgfcab n
+  JOIN tgfite i ON i.nunota = n.nunota
+  JOIN tgfpar c ON c.codparc = n.codparc;
 ```
+
+> Os nomes acima sao os do dicionario padrao do Sankhya; a versao final da view depende
+> do que existir na sua base. Isso e ajustado quando a conexao for definida.
 
 ### Usuario somente leitura
 

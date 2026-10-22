@@ -61,8 +61,10 @@ def _motivo_integridade(exc: IntegrityError) -> str:
         return "ean14 ja cadastrado em outro produto"
     if "chave_nfe" in texto:
         return "chave_nfe ja cadastrada em outra nota"
-    if "uq_nf_serie_numero" in texto:
-        return "ja existe nota com esta serie e numero"
+    if "uq_nf_nunota" in texto:
+        return "NUNOTA ja cadastrado em outra nota"
+    if "uq_nf_empresa_serie_numero" in texto:
+        return "ja existe nota com esta empresa, serie e numero"
     if "products_codigo" in texto or "ix_products_codigo" in texto:
         return "codigo de produto duplicado"
     return "violacao de integridade no banco"
@@ -114,52 +116,113 @@ def _gravar_produto(db: Session, item: ProdutoSyncIn) -> None:
         produto.ean13_origem = "erp"
 
 
-def _localizar_nf(db: Session, item: NFSyncIn) -> Optional[NotaFiscal]:
+def _localizar_nf(db: Session, item: NFSyncIn) -> tuple[Optional[NotaFiscal], str]:
+    """Devolve a nota e por qual chave ela foi encontrada."""
+    # 1. NUNOTA (Sankhya): numero unico do sistema, o que evita duplicidade.
+    if item.nunota is not None:
+        nf = db.query(NotaFiscal).filter(NotaFiscal.nunota == item.nunota).first()
+        if nf:
+            return nf, "nunota"
+
+    # 2. Chave de acesso da NF-e.
     if item.chave_nfe:
         nf = db.query(NotaFiscal).filter(NotaFiscal.chave_nfe == item.chave_nfe).first()
         if nf:
-            return nf
+            return nf, "chave_nfe"
 
+    # 3. Identidade da SEFAZ: empresa + serie + numero.
     if item.serie:
-        return (
+        nf = (
             db.query(NotaFiscal)
             .filter(
+                NotaFiscal.codigo_empresa == item.codigo_empresa,
                 NotaFiscal.serie == item.serie,
                 NotaFiscal.numero == item.numero,
             )
             .first()
         )
+        if nf:
+            return nf, "empresa/serie/numero"
+        return None, "nova"
 
-    candidatas = db.query(NotaFiscal).filter(NotaFiscal.numero == item.numero).all()
+    # 4. Sem serie: so da para desempatar se nao houver mais de uma candidata.
+    candidatas = (
+        db.query(NotaFiscal)
+        .filter(
+            NotaFiscal.codigo_empresa == item.codigo_empresa,
+            NotaFiscal.numero == item.numero,
+        )
+        .all()
+    )
     if len(candidatas) > 1:
         raise _Skip(
-            "numero de NF repetido em series diferentes: envie chave_nfe ou serie"
+            "numero de NF repetido em series diferentes: envie nunota, chave_nfe ou serie"
         )
-    return candidatas[0] if candidatas else None
+    if candidatas:
+        return candidatas[0], "empresa/numero"
+    return None, "nova"
+
+
+def _conflitos_identidade(nf: NotaFiscal, item: NFSyncIn) -> list[str]:
+    """O que difere entre a nota existente e a que chegou.
+
+    Identidade nao se reescreve: se o NUNOTA aponta para uma nota de outra empresa
+    ou de outro numero, o payload esta errado. Corrigir em silencio trocaria a nota
+    que o operador esta conferindo.
+    """
+    conflitos = []
+    if nf.codigo_empresa != item.codigo_empresa:
+        conflitos.append("empresa")
+    if nf.numero != item.numero:
+        conflitos.append("numero")
+    if nf.serie and item.serie and nf.serie != item.serie:
+        conflitos.append("serie")
+    if nf.chave_nfe and item.chave_nfe and nf.chave_nfe != item.chave_nfe:
+        conflitos.append("chave_nfe")
+    if nf.nunota and item.nunota and nf.nunota != item.nunota:
+        conflitos.append("nunota")
+    return conflitos
 
 
 def _gravar_nf(db: Session, item: NFSyncIn) -> list[str]:
-    nf = _localizar_nf(db, item)
+    nf, como = _localizar_nf(db, item)
 
     if nf is not None and nf.status != "pendente":
         # Nao regride quem ja esta em conferencia/entrega: a operacao manda.
         raise _Skip(f"NF {nf.numero} esta em '{nf.status}': sync ignorado")
 
     if nf is None:
-        nf = NotaFiscal(numero=item.numero, cliente=item.cliente, status="pendente")
+        nf = NotaFiscal(
+            numero=item.numero,
+            codigo_empresa=item.codigo_empresa,
+            nunota=item.nunota,
+            serie=item.serie,
+            chave_nfe=item.chave_nfe,
+            cliente=item.cliente,
+            status="pendente",
+        )
         db.add(nf)
         db.flush()
+    else:
+        # Identidade nao se reescreve; so completa o que estava vazio.
+        conflitos = _conflitos_identidade(nf, item)
+        if conflitos:
+            raise _Skip(
+                f"nota localizada por {como} mas {', '.join(conflitos)} nao confere(m): "
+                "identidade nao pode ser alterada"
+            )
+        if not nf.serie:
+            nf.serie = item.serie
+        if not nf.nunota:
+            nf.nunota = item.nunota
+        if not nf.chave_nfe:
+            nf.chave_nfe = item.chave_nfe
 
-    nf.numero = item.numero
     nf.cliente = item.cliente
     if item.endereco is not None:
         nf.endereco = item.endereco
     if item.data_emissao is not None:
         nf.data_emissao = item.data_emissao
-    if item.chave_nfe:
-        nf.chave_nfe = item.chave_nfe
-    if item.serie:
-        nf.serie = item.serie
     if item.cnpj_cliente:
         nf.cnpj_cliente = item.cnpj_cliente
 

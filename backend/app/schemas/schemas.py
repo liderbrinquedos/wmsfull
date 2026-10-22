@@ -84,6 +84,8 @@ class NFItemOut(BaseModel):
 
 class NFOut(BaseModel):
     id: str
+    codigo_empresa: int
+    nunota: Optional[int] = None
     numero: str
     serie: Optional[str] = None
     chave_nfe: Optional[str] = None

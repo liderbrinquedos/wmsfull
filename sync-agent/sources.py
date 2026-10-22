@@ -48,6 +48,8 @@ class ItemERP:
 class NotaERP:
     numero: str
     cliente: str
+    codigo_empresa: int = 1
+    nunota: int | None = None
     chave_nfe: str | None = None
     serie: str | None = None
     cnpj_cliente: str | None = None
@@ -56,10 +58,16 @@ class NotaERP:
     itens: list[ItemERP] = field(default_factory=list)
 
     def chave(self) -> str:
-        return self.chave_nfe or f"{self.serie or '-'}/{self.numero}"
+        if self.nunota is not None:
+            return f"nunota:{self.nunota}"
+        if self.chave_nfe:
+            return f"chave:{self.chave_nfe}"
+        return f"{self.codigo_empresa}/{self.serie or '-'}/{self.numero}"
 
     def para_payload(self) -> dict:
         return {
+            "codigo_empresa": self.codigo_empresa,
+            "nunota": self.nunota,
             "numero": self.numero,
             "chave_nfe": self.chave_nfe,
             "serie": self.serie,
@@ -157,8 +165,8 @@ class PostgresERP(FonteERP):
             with conexao.cursor(cursor_factory=cursor_factory) as cur:
                 cur.execute(
                     f"""
-                    SELECT chave_nfe, numero, serie, cnpj_cliente, cliente,
-                           endereco, data_emissao,
+                    SELECT codigo_empresa, nunota, chave_nfe, numero, serie,
+                           cnpj_cliente, cliente, endereco, data_emissao,
                            codigo_produto, qtd_nota, qtd_embalagem
                       FROM {self.view_nf}
                      WHERE data_emissao >= %s
@@ -207,12 +215,23 @@ def _agrupar_notas(linhas: Iterable[dict]) -> Iterable[NotaERP]:
         numero = _texto(linha.get("numero")) or ""
         chave_nfe = _texto(linha.get("chave_nfe"))
         serie = _texto(linha.get("serie"))
-        chave = chave_nfe or f"{serie or '-'}/{numero}"
+        codigo_empresa = _inteiro(linha.get("codigo_empresa")) or 1
+        nunota = _inteiro(linha.get("nunota"))
+
+        # NUNOTA e o id do sistema (Sankhya): agrupa melhor que a chave da SEFAZ.
+        if nunota is not None:
+            chave = f"nunota:{nunota}"
+        elif chave_nfe:
+            chave = f"chave:{chave_nfe}"
+        else:
+            chave = f"{codigo_empresa}/{serie or '-'}/{numero}"
 
         nota = por_chave.get(chave)
         if nota is None:
             nota = NotaERP(
                 numero=numero,
+                codigo_empresa=codigo_empresa,
+                nunota=nunota,
                 chave_nfe=chave_nfe,
                 serie=serie,
                 cnpj_cliente=_texto(linha.get("cnpj_cliente")),

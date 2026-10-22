@@ -40,6 +40,8 @@ export interface NFItem {
 
 export interface NotaFiscal {
   id: string;
+  codigo_empresa: number;
+  nunota?: number | null;
   numero: string;
   serie?: string | null;
   chave_nfe?: string | null;

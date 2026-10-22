@@ -8,7 +8,11 @@
 | **NF** | Nota Fiscal de **saida**: a empresa emite e o cliente recebe. Unidade central do sistema; carrega o status do fluxo operacional |
 | **Cliente** | Destinatario da NF. E o dono do endereco de entrega, nao um fornecedor |
 | **Chave da NF-e** | 44 digitos que identificam a nota em todo o pais. E a chave natural do sync |
-| **Serie** | Sequencia de numeracao da NF. Junto com `numero`, e unica por emitente |
+| **Serie** | Sequencia de numeracao da NF. `(empresa, serie, numero)` identifica a nota na SEFAZ |
+| **NUNOTA** | Numero unico da nota dentro do Sankhya. E a chave que evita duplicidade no sync |
+| **NUMNOTA** | Numero da nota na SEFAZ. Unico por empresa e serie |
+| **CODEMP** | Codigo da empresa/filial no Sankhya. A mesma base atende mais de uma empresa |
+| **Sankhya** | ERP da empresa. As notas vivem em `TGFCAB` e os itens em `TGFITE` |
 | **Fornecedor** | Nao existe neste fluxo. O WMSFull trata expedicao para clientes; compras nao entram no sistema |
 | **NFItem** | Item (produto + quantidade) dentro de uma nota fiscal |
 | **Caixa master** | Embalagem padrao do produto. `qtd_embalagem` = unidades dentro de uma caixa |

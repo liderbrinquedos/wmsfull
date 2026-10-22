@@ -1,7 +1,7 @@
 from datetime import date
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 # ── Agente -> API ────────────────────────────────────────────────
@@ -28,6 +28,14 @@ class NFItemSyncIn(BaseModel):
 
 
 class NFSyncIn(BaseModel):
+    """Uma NF de saida vinda do ERP.
+
+    Sankhya: `codigo_empresa` = CODEMP, `nunota` = NUNOTA (unico no sistema),
+    `numero` = NUMNOTA, `serie` = SERIENOTA, `chave_nfe` = CHAVENFE.
+    """
+
+    codigo_empresa: int = 1
+    nunota: Optional[int] = None
     numero: str
     chave_nfe: Optional[str] = None
     serie: Optional[str] = None
@@ -36,6 +44,14 @@ class NFSyncIn(BaseModel):
     endereco: Optional[str] = None
     data_emissao: Optional[date] = None
     itens: list[NFItemSyncIn] = Field(default_factory=list)
+
+    @field_validator("numero", "serie", mode="before")
+    @classmethod
+    def _para_texto(cls, valor):
+        # NUMNOTA e SERIENOTA chegam como numero no ERP.
+        if valor is None:
+            return None
+        return str(valor).strip() or None
 
 
 class NFsSyncIn(BaseModel):

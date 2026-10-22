@@ -76,6 +76,15 @@ Nenhum item em aberto. Os cinco foram resolvidos na fase 0 (ver **Itens resolvid
 - **Correcao sugerida:** rotina na API que marca `sync_runs` atrasado e expoe isso no
   `/health` (ou um alerta no Uptime Kuma batendo em `/admin/sync/status`).
 
+### P1-13 Agente so le Postgres; o ERP e Sankhya
+- `sync-agent/sources.py` implementa `PostgresERP` (psycopg2) e `CsvERP`. O Sankhya roda
+  tipicamente em **Oracle** (`oracledb`) ou **SQL Server** (`pyodbc`), entao a fonte
+  Postgres pode nao servir.
+- **Impacto:** bloqueia a fase 3 em producao, nao o deploy.
+- **Correcao:** nova classe `FonteERP` com o driver do banco do ERP, escolhida por
+  `ERP_TIPO`. O contrato das views (e o resto do agente) nao muda.
+- **Aguardando:** host, banco e driver do Sankhya (a definir na conexao).
+
 ---
 
 ## P2 - Qualidade e Manutencao

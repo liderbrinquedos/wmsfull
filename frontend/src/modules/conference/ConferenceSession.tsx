@@ -111,6 +111,7 @@ export const ConferenceSession: React.FC<ConferenceSessionProps> = ({ nf, onBack
             <h3>Conferência da Nota {currentNf.numero}</h3>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
               Cliente: <strong>{currentNf.cliente}</strong>
+              <span> · Emp. {currentNf.codigo_empresa}</span>
               {currentNf.serie && <span> · Série {currentNf.serie}</span>}
             </p>
           </div>
