@@ -1,0 +1,25 @@
+# Somente desenvolvimento local.
+#
+# O Coolify usa o docker-compose.yml (sem portas publicadas: so `expose`).
+# Este arquivo devolve as portas do host e liga o seed de demonstracao.
+#
+#   docker compose up --build
+#
+# Para rodar exatamente como em producao, ignore o override:
+#   docker compose -f docker-compose.yml up --build
+
+services:
+
+  logfull-db:
+    ports:
+      - "5435:5432"
+
+  logfull-api:
+    ports:
+      - "8005:8000"
+    environment:
+      SEED_DEMO_DATA: "true"
+
+  logfull-web:
+    ports:
+      - "3005:80"

@@ -14,8 +14,8 @@
 | 1 | Documentacao (`.wiki/`, `AGENTS.md`, `README.md`) | Concluido |
 | 2 | Repositorio GitHub | Concluido |
 | 3 | Brainstorm de producao + fontes de dados | Concluido (spec + ADR-006 + ADR-007) |
-| 4 | Fase 0 - seguranca | **Em andamento** |
-| 5 | Fase 1 - Alembic e schema | Pendente |
+| 4 | Fase 0 - seguranca | Concluido (2026-10-22) |
+| 5 | Fase 1 - Alembic e schema | **Proximo** |
 | 6 | Fase 2 - homologacao no Coolify | Pendente |
 | 7 | Fase 3 - ingestao ERP (`/sync/*` + agente) | Pendente |
 | 8 | Fase 4 - importacao de planilhas | Pendente |
@@ -38,15 +38,17 @@
 
 ---
 
-## Fase 0 - Seguranca (em andamento)
+## Fase 0 - Seguranca (concluida em 2026-10-22)
 
-Itens de `backlog/tech-debt.md` que bloqueiam o deploy:
+Itens de `backlog/tech-debt.md` que bloqueavam o deploy:
 
-- [ ] P0-01 `SECRET_KEY` e `DATABASE_URL` obrigatorios, sem default
-- [ ] P0-02 remover credenciais de teste da tela de login
-- [ ] P0-03 compose com `expose` + `docker-compose.override.yml`
-- [ ] P0-04 validar upload de foto do canhoto
-- [ ] P0-05 `client_max_body_size` no nginx
+- [x] P0-01 `SECRET_KEY` e `DATABASE_URL` obrigatorios, sem default
+- [x] P0-02 remover credenciais de teste da tela de login
+- [x] P0-03 compose com `expose` + `docker-compose.override.yml`
+- [x] P0-04 validar upload de foto do canhoto (`app/core/uploads.py`)
+- [x] P0-05 `client_max_body_size` no nginx
+
+Extra: P1-01 (CORS por env var) e `SEED_DEMO_DATA` (seed nao roda mais em producao).
 
 ---
 

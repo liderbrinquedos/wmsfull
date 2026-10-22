@@ -10,6 +10,7 @@ import math
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from sqlalchemy import text
+from app.core.config import settings
 from app.core.database import engine, SessionLocal, Base
 from app.core.security import get_password_hash
 from app.models.user import User
@@ -32,6 +33,13 @@ def wait_for_db(retries=10, delay=3):
 
 
 def seed():
+    # Dados de demonstracao so entram com SEED_DEMO_DATA=true. Em producao o
+    # default e false: sem essa trava o container criaria usuarios com senha
+    # conhecida (admin123) em todo boot.
+    if not settings.SEED_DEMO_DATA:
+        print("⏭️  Seed desativado (SEED_DEMO_DATA=false).")
+        return
+
     wait_for_db()
 
     # Criar tabelas

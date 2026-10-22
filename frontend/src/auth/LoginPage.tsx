@@ -20,18 +20,6 @@ export const LoginPage: React.FC = () => {
     }
   };
 
-  const quickLogin = async (userEmail: string, userPass: string) => {
-    setEmail(userEmail);
-    setPassword(userPass);
-    setError('');
-    try {
-      const user = await login(userEmail, userPass);
-      redirectByRole(user.perfil);
-    } catch (err: any) {
-      setError(err.response?.data?.detail || 'Erro ao realizar login');
-    }
-  };
-
   const redirectByRole = (perfil: string) => {
     if (perfil === 'motorista') {
       navigate('/delivery');
@@ -124,46 +112,6 @@ export const LoginPage: React.FC = () => {
             {isLoading ? 'Entrando...' : 'Entrar no Sistema'}
           </button>
         </form>
-
-        <div style={{ marginTop: '28px', borderTop: '1px solid var(--border-color)', paddingTop: '20px' }}>
-          <p style={{ fontSize: '0.78rem', color: 'var(--text-dim)', textAlign: 'center', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            Acesso Rápido para Testes
-          </p>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-            <button
-              type="button"
-              className="btn btn-secondary"
-              style={{ fontSize: '0.8rem', padding: '8px' }}
-              onClick={() => quickLogin('admin@log.com', 'admin123')}
-            >
-              👑 Admin
-            </button>
-            <button
-              type="button"
-              className="btn btn-secondary"
-              style={{ fontSize: '0.8rem', padding: '8px' }}
-              onClick={() => quickLogin('super@log.com', 'super123')}
-            >
-              📋 Supervisor
-            </button>
-            <button
-              type="button"
-              className="btn btn-secondary"
-              style={{ fontSize: '0.8rem', padding: '8px' }}
-              onClick={() => quickLogin('operador@log.com', 'op123')}
-            >
-              📦 Conferente
-            </button>
-            <button
-              type="button"
-              className="btn btn-secondary"
-              style={{ fontSize: '0.8rem', padding: '8px' }}
-              onClick={() => quickLogin('joao@log.com', 'moto123')}
-            >
-              🚚 Motorista João
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   );

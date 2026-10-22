@@ -1,11 +1,9 @@
-import os
-import uuid
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.security import get_current_user, require_roles
-from app.core.config import settings
+from app.core.uploads import salvar_imagem
 from app.models.nota_fiscal import NotaFiscal
 from app.models.delivery import Delivery
 from app.models.user import User
@@ -46,14 +44,7 @@ async def confirm_delivery(
 
     foto_url = None
     if foto and foto.filename:
-        os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
-        ext = os.path.splitext(foto.filename)[1] or ".jpg"
-        filename = f"{uuid.uuid4()}{ext}"
-        filepath = os.path.join(settings.UPLOAD_DIR, filename)
-        content = await foto.read()
-        with open(filepath, "wb") as f:
-            f.write(content)
-        foto_url = f"/uploads/{filename}"
+        foto_url = await salvar_imagem(foto)
 
     delivery = Delivery(
         nf_id=nf_id,

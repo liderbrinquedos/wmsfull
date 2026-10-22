@@ -76,6 +76,31 @@
 - `LoginPage.tsx` tem 4 botoes de login rapido com senha em texto puro, compilados no
   bundle de producao.
 
+---
+
+## 2026-10-22 - Fase 0 (seguranca antes do deploy)
+
+### O `CMD` do Dockerfile rodava o seed em todo boot
+- `backend/Dockerfile` executava `python app/seed.py` antes do uvicorn. Em producao isso
+  criaria usuarios com senha conhecida (`admin123`) e recriaria dados de exemplo.
+- Corrigido com a trava `SEED_DEMO_DATA` (default `false`); o seed virou opcional e o
+  override local e quem liga. Na fase 1 o `create_all` sai de vez.
+
+### `content_type` do upload e declarado pelo cliente
+- Validar so o `content_type` da falsa sensacao de seguranca. A extensao do arquivo agora
+  e escolhida pelo tipo declarado e o conteudo e conferido pelos magic bytes (JPEG `FF D8
+  FF`, PNG, WebP), com limite de 5 MB.
+
+### Variavel de ambiente obrigatoria precisa falhar no compose, nao na API
+- `${VAR:?mensagem}` faz o `docker compose config` abortar antes de subir qualquer
+  container. Sem isso a API sobe, o banco cai e o erro aparece longe da causa.
+- `SECRET_KEY` tambem exige `min_length=32`: string vazia passaria na validacao de tipo e
+  produziria tokens assinados com chave vazia.
+
+### Portas publicadas quebram o Coolify
+- `ports:` no compose base colide com o Traefik (`port is already allocated`). O padrao e
+  `expose:` no base e `docker-compose.override.yml` para o ambiente local.
+
 ### `@tanstack/react-query` declarado e nao usado
 - Nao ha `QueryClientProvider` nem `useQuery`/`useMutation` em lugar nenhum. Todo o
   fetching e `useState` + `useEffect` + axios, com codigo de loading repetido em 5 telas.

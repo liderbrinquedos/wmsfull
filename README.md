@@ -59,8 +59,20 @@ baixa de entrega com foto do canhoto - em uma unica SPA mobile-first instalavel 
 ```bash
 git clone git@github.com:liderbrinquedos/wmsfull.git
 cd wmsfull
-docker compose up -d
+cp .env.example .env
 ```
+
+Preencha no `.env`, antes de subir:
+
+- `POSTGRES_PASSWORD` e `DATABASE_URL` — a mesma senha nos dois;
+- `SECRET_KEY` — gere com `openssl rand -hex 32`.
+
+```bash
+docker compose up -d --build
+```
+
+As portas abaixo vem do `docker-compose.override.yml`, que so vale no ambiente local
+(o Coolify usa o `docker-compose.yml` puro, sem portas publicadas):
 
 | Servico | URL |
 |---|---|
@@ -69,9 +81,14 @@ docker compose up -d
 | Docs OpenAPI | http://localhost:8005/docs |
 | Postgres | `localhost:5435` |
 
+`SECRET_KEY`, `DATABASE_URL` e `POSTGRES_PASSWORD` nao tem valor padrao: sem eles o
+compose se recusa a subir. E proposital — falhar no boot e melhor que rodar em producao
+com chave publica.
+
 ### Credenciais de seed
 
-Criadas automaticamente pelo `backend/app/seed.py` no primeiro boot:
+O `seed.py` so cria os usuarios abaixo quando `SEED_DEMO_DATA=true` (o override local ja
+liga; o compose base desliga):
 
 | Perfil | Email | Senha |
 |---|---|---|
@@ -89,6 +106,9 @@ Criadas automaticamente pelo `backend/app/seed.py` no primeiro boot:
 # Backend
 cd backend
 pip install -r requirements.txt
+export SECRET_KEY=$(openssl rand -hex 32)
+export DATABASE_URL=postgresql://logfull:troque-esta-senha@localhost:5435/logfull
+export SEED_DEMO_DATA=true
 python app/seed.py
 uvicorn app.main:app --reload --port 8005
 

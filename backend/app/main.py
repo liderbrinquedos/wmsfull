@@ -13,11 +13,12 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
-# CORS — permite frontend React acessar a API
+# CORS — o frontend e servido pela mesma origem (nginx faz proxy de /api).
+# Origens externas so entram se CORS_ORIGINS for configurado explicitamente.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=settings.cors_origins,
+    allow_credentials=bool(settings.cors_origins),
     allow_methods=["*"],
     allow_headers=["*"],
 )
