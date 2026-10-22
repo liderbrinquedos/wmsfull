@@ -126,6 +126,13 @@ export const wmsApi = {
     const res = await api.put(`/wms/products/${id}/location`, { localizacao, estoque_caixas });
     return res.data;
   },
+  updateEan: async (
+    id: string,
+    ean: { ean13?: string | null; ean14?: string | null }
+  ): Promise<Product> => {
+    const res = await api.put(`/wms/products/${id}/ean`, ean);
+    return res.data;
+  },
   getStats: async () => {
     const res = await api.get('/wms/stats');
     return res.data;
@@ -199,6 +206,106 @@ export const adminApi = {
   },
   getOverview: async (): Promise<AdminOverview> => {
     const res = await api.get('/admin/overview');
+    return res.data;
+  },
+};
+
+// ── Ingestao (painel do admin) ───────────────────────────────────
+
+export interface SyncRunResumo {
+  id: string;
+  tipo: 'erp' | 'ficha' | 'localizacao';
+  origem: 'agenda' | 'manual' | 'upload';
+  status: 'executando' | 'ok' | 'parcial' | 'erro';
+  iniciado_em: string | null;
+  finalizado_em: string | null;
+  lidos: number;
+  gravados: number;
+  erros: number;
+  arquivo: string | null;
+  mensagem: string | null;
+}
+
+export interface SyncPedido {
+  id: string;
+  status: string;
+  solicitado_em: string | null;
+  atendido_em: string | null;
+  run_id: string | null;
+}
+
+export interface SyncStatus {
+  ultima_por_tipo: Record<string, SyncRunResumo | null>;
+  pedido_pendente: SyncPedido | null;
+  consultado_em: string;
+}
+
+export interface SyncRunDetalhe extends SyncRunResumo {
+  erros_detalhe: Array<{
+    entidade: string;
+    chave: string | null;
+    campo: string | null;
+    motivo: string;
+  }>;
+}
+
+export const syncApi = {
+  status: async (): Promise<SyncStatus> => {
+    const res = await api.get('/admin/sync/status');
+    return res.data;
+  },
+  solicitar: async (): Promise<SyncPedido> => {
+    const res = await api.post('/admin/sync/request');
+    return res.data;
+  },
+  runs: async (tipo?: string): Promise<SyncRunResumo[]> => {
+    const res = await api.get('/admin/sync/runs', { params: { tipo } });
+    return res.data;
+  },
+  run: async (id: string): Promise<SyncRunDetalhe> => {
+    const res = await api.get(`/admin/sync/runs/${id}`);
+    return res.data;
+  },
+};
+
+// ── Importacao de planilhas ──────────────────────────────────────
+
+export interface ImportRelatorio {
+  tipo: 'ficha' | 'localizacao';
+  arquivo: string;
+  linhas_lidas: number;
+  validas: number;
+  rejeitadas: number;
+  nao_encontradas: number;
+  sem_alteracao: number;
+  sem_localizacao: number;
+  divergencias: Array<{ chave: string; campo: string; planilha: number; atual: number }>;
+  erros: Array<{ linha: number; chave: string | null; motivo: string }>;
+  amostra: Array<{ chave: string; antes: Record<string, unknown>; depois: Record<string, unknown> }>;
+  aplicado: boolean;
+  run_id?: string | null;
+  gravados?: number;
+  status?: string;
+  mensagem?: string;
+}
+
+export const importApi = {
+  preview: async (tipo: string, arquivo: File): Promise<ImportRelatorio> => {
+    const form = new FormData();
+    form.append('tipo', tipo);
+    form.append('arquivo', arquivo);
+    const res = await api.post('/import/preview', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return res.data;
+  },
+  apply: async (tipo: string, arquivo: File): Promise<ImportRelatorio> => {
+    const form = new FormData();
+    form.append('tipo', tipo);
+    form.append('arquivo', arquivo);
+    const res = await api.post('/import/apply', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
     return res.data;
   },
 };

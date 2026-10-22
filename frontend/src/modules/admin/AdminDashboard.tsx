@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { adminApi, User, DeliveryReportItem, AdminOverview } from '../../api/client';
 import { useAuthStore } from '../../store/authStore';
+import { SyncPanel } from './SyncPanel';
 
 export const AdminDashboard: React.FC = () => {
-  const [tab, setTab] = useState<'overview' | 'users' | 'reports'>('overview');
+  const [tab, setTab] = useState<'overview' | 'users' | 'reports' | 'sync'>('overview');
   const [overview, setOverview] = useState<AdminOverview | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [motoristas, setMotoristas] = useState<User[]>([]);
@@ -120,7 +121,17 @@ export const AdminDashboard: React.FC = () => {
         >
           📋 Histórico de Entregas
         </button>
+
+        <button
+          onClick={() => setTab('sync')}
+          className={`btn ${tab === 'sync' ? 'btn-primary' : 'btn-secondary'}`}
+        >
+          🔄 Sincronização
+        </button>
       </div>
+
+      {/* TAB: SYNC */}
+      {tab === 'sync' && <SyncPanel />}
 
       {/* TAB 1: OVERVIEW */}
       {tab === 'overview' && overview && (

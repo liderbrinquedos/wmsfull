@@ -136,6 +136,39 @@
   `(cnpj_fornecedor, serie, numero)` nao serviria para nada enquanto o `unique` global
   existisse: o segundo fornecedor com NF 1234 seria rejeitado. O `unique` saiu.
 
+---
+
+## 2026-10-22 - Fases 3 e 4 (ingestao)
+
+### `begin_nested()` e o que permite erro por item
+- Sem savepoint, um `IntegrityError` no 5o item aborta a transacao inteira e derruba o
+  lote. Com `with db.begin_nested():` o erro volta so para aquele item, o resto do lote
+  entra, e o motivo vai para `sync_run_errors`.
+- A excecao precisa ser capturada **fora** do `with`, senao o savepoint nao e liberado.
+
+### Upsert por `chave_nfe` precisa de fallback, mas o fallback pode ser ambiguo
+- Buscar so por `numero` pode devolver mais de uma nota (dois fornecedores, mesmo numero).
+  Nesse caso a API recusa e pede `chave_nfe` ou `(cnpj_fornecedor, serie)`. Escolher "a
+  primeira" silenciosamente sobrescreveria a nota errada.
+
+### `openpyxl` e obrigatorio no container, nao no host
+- O parser rodava no Python do sistema (que ja tinha `openpyxl`), mas a imagem da API nao.
+  Sem `openpyxl` no `requirements.txt`, o endpoint so quebrava dentro do container.
+
+### Planilha real e o melhor teste que existe
+- O parser foi validado contra as 3 fichas e a `Localizacao.xlsx`: 112/155/224 linhas,
+  2 EAN13 e 12 DUN14 com DV invalido, 1.381 sem localizacao, 460 enderecos distintos e 60
+  sem quantidade. Se esses numeros nao baterem, o parser esta errado.
+
+### `sem_alteracao` nao e `rejeitada`
+- A primeira versao contava linha "nada a fazer" como rejeitada, porque o campo tinha
+  valor. Um relatorio que acusa erro onde nao ha erro treina o operador a ignorar o
+  relatorio.
+
+### Upload de `.xlsx` via HTTP precisa de `python-multipart`
+- Ja estava no `requirements.txt` desde o upload de foto; sem ele o `Form`/`File` do
+  FastAPI nem sobe.
+
 ### `@tanstack/react-query` declarado e nao usado
 - Nao ha `QueryClientProvider` nem `useQuery`/`useMutation` em lugar nenhum. Todo o
   fetching e `useState` + `useEffect` + axios, com codigo de loading repetido em 5 telas.

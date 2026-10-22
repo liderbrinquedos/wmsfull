@@ -99,15 +99,18 @@ IDs fixos (`u1`-`u5`, `p1`-`p5`, `nf1`-`nf3`, `i1`-`i6`).
 
 ---
 
-## Endpoints (21)
+## Endpoints (34 operacoes, 33 rotas)
 
 | Prefixo | Endpoints | Perfis |
 |---|---|---|
 | `/auth` | `POST /login`, `GET /me` | publico / autenticado |
-| `/wms` | `GET /products`, `GET /products/{id}`, `PUT /products/{id}/location`, `GET /stats` | autenticado / `admin,supervisor` na edicao |
+| `/wms` | `GET /products`, `GET /products/{id}`, `PUT /products/{id}/location`, `PUT /products/{id}/ean`, `GET /stats` | autenticado / `admin,supervisor` na edicao |
 | `/conference` | `GET /nf`, `GET /nf/{id}`, `POST /nf/{id}/start`, `POST /nf/{id}/scan`, `POST /nf/{id}/assign` | autenticado / `admin,supervisor,operador` / `admin,supervisor` |
 | `/delivery` | `GET /nf`, `POST /nf/{id}/deliver`, `POST /nf/{id}/reschedule` | autenticado (motorista: proprias NFs) |
 | `/admin` | `GET/POST /users`, `PUT /users/{id}`, `GET /motoristas`, `GET /reports/deliveries`, `GET /overview` | `admin` / `admin,supervisor` |
+| `/admin/sync` | `GET /status`, `POST /request`, `GET /runs`, `GET /runs/{id}` | `admin,supervisor` |
+| `/sync` | `POST /runs`, `POST /produtos`, `POST /nf`, `GET /requests/pending`, `POST /runs/{id}/finish` | `X-Sync-Key` (agente) |
+| `/import` | `POST /preview`, `POST /apply` | `admin,supervisor` |
 | app | `GET /`, `GET /health` | publico |
 
 Detalhe completo em `[[integrations/api-catalog]]`.

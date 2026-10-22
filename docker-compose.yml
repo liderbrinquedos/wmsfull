@@ -54,6 +54,7 @@ services:
       ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-480}
       UPLOAD_DIR: /app/uploads
       CORS_ORIGINS: ${CORS_ORIGINS:-}
+      SYNC_API_KEY: ${SYNC_API_KEY:-}
       TZ: ${TZ:-America/Sao_Paulo}
     volumes:
       - uploads:/app/uploads

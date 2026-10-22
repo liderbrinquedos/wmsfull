@@ -1,0 +1,18 @@
+# Roda no servidor INTERNO (nao no Coolify).
+#
+#   cp .env.example .env    # preencha WMS_API_URL, SYNC_API_KEY, ERP_DATABASE_URL
+#   docker compose up -d --build
+#
+# Sem portas, sem volumes: o agente so faz requisicoes de saida.
+
+services:
+
+  wmsfull-sync:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

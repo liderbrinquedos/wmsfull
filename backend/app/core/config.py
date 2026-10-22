@@ -23,6 +23,12 @@ class Settings(BaseSettings):
     # Vazio = nenhuma origem externa (o frontend e servido pelo mesmo dominio).
     CORS_ORIGINS: str = ""
 
+    # Chave do agente de ingestao (header X-Sync-Key). Vazia = /sync desabilitado.
+    SYNC_API_KEY: str = ""
+
+    # Tamanho maximo de cada lote aceito em /sync/*.
+    SYNC_MAX_LOTE: int = 500
+
     # Popula o banco com dados de demonstracao no boot. Nunca em producao.
     SEED_DEMO_DATA: bool = False
 

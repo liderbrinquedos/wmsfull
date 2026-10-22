@@ -33,13 +33,22 @@ baixa de entrega com foto do canhoto - em uma unica SPA mobile-first instalavel 
 - KPIs: total de produtos, total de caixas, distribuicao por rua
 - Enderecamento normalizado `RUA + PRAT + POS(2) + NIVEL` (ex.: `F102C`)
 - Movimentacao de localizacao e ajuste de estoque em caixas master (admin/supervisor)
+- Cadastro manual de EAN13/EAN14 por produto, com conferencia de digito verificador
 
 ### Conferencia (`/conference`)
 - Lista de notas fiscais com filtros por status (pendente, em_conferencia, conferida)
-- Bipagem por codigo de barras master (leitor USB ou leitor de camera)
+- Bipagem pelo codigo da **caixa** (EAN14/DUN14); o codigo da unidade (EAN13) e
+  recusado de proposito, para nao contar unidade como caixa
 - Progresso por item (`caixas_lidas / caixas_necessarias`) e por nota
 - Calculo automatico de caixas necessarias: `ceil(qtd_nota / qtd_embalagem)`
 - Atribuicao de motorista e expedicao para entrega (admin/supervisor)
+
+### Ingestao de dados
+- Agente `wmsfull-sync` no servidor interno envia o ERP por HTTPS 3x ao dia
+  (ver `sync-agent/README.md`)
+- Importacao de fichas tecnicas e da planilha de localizacao, em duas etapas
+  (analisar e depois aplicar)
+- Painel `/admin` > Sincronizacao: ultima execucao, erros por item e botao "Sincronizar agora"
 
 ### Entrega (`/delivery`)
 - Fila do motorista com KPIs clicaveis (a entregar, entregues, reagendadas)
@@ -51,6 +60,8 @@ baixa de entrega com foto do canhoto - em uma unica SPA mobile-first instalavel 
 - Visao geral (total de NFs, por status, usuarios ativos, motoristas ativos)
 - CRUD de usuarios com perfis e ativacao/desativacao (admin)
 - Relatorio de entregas com filtro por motorista
+- Painel de sincronizacao: ultima execucao por origem, erros por item, pedido manual
+  e importacao de planilhas
 
 ---
 
@@ -151,10 +162,10 @@ apaga o volume do Postgres.
 wmsfull/
 ├── backend/
 │   ├── app/
-│   │   ├── core/           # config.py, database.py, security.py
+│   │   ├── core/           # config, database, security, uploads, barcodes, planilhas
 │   │   ├── models/         # user, product, nota_fiscal, delivery, sync
-│   │   ├── schemas/        # schemas.py (13 schemas Pydantic)
-│   │   ├── routers/        # auth, wms, conference, delivery, admin
+│   │   ├── schemas/        # schemas.py, sync.py (Pydantic v2)
+│   │   ├── routers/        # auth, wms, conference, delivery, admin, sync, sync_admin, imports
 │   │   ├── crud/           # (vazio - queries inline nos routers)
 │   │   ├── main.py
 │   │   └── seed.py         # apenas dados, sob SEED_DEMO_DATA
@@ -162,20 +173,53 @@ wmsfull/
 │   │   ├── env.py
 │   │   └── versions/
 │   └── Dockerfile
+├── sync-agent/             # agente que roda no servidor INTERNO (fora do Coolify)
+│   ├── agent.py            # loop, agendamento e cliente da API
+│   ├── sources.py          # leitura do ERP (postgres ou csv)
+│   └── README.md           # contrato das views + configuracao
 ├── frontend/
 │   ├── nginx/nginx.conf    # proxy /api e /uploads
 │   ├── public/             # manifest.json, icons/
 │   └── src/
-│       ├── api/client.ts   # axios + 5 namespaces de API
+│       ├── api/client.ts   # axios + namespaces de API
 │       ├── auth/           # LoginPage, AuthGuard
 │       ├── components/     # Layout, Navbar
 │       ├── modules/        # wms, conference, delivery, admin
 │       └── store/          # authStore
 ├── docker-compose.yml
+├── docker-compose.override.yml
 ├── .wiki/                  # base de conhecimento
 ├── backlog/                # debito tecnico
 └── docs/                   # especificacoes de design
 ```
+
+---
+
+## Ingestao de dados
+
+Duas portas de entrada, ambas autenticadas e registradas em `sync_runs`:
+
+| Porta | Quem usa | Autenticacao |
+|---|---|---|
+| `POST /sync/*` | agente `wmsfull-sync` no servidor interno | header `X-Sync-Key` |
+| `POST /import/*` | admin pela tela | JWT |
+
+O app publico **nunca** inicia conexao para a rede interna: o agente le o ERP e
+empurra por HTTPS. Configuracao e contrato das views em `sync-agent/README.md`.
+
+```bash
+# no servidor interno
+cd sync-agent
+cp .env.example .env      # WMS_API_URL, SYNC_API_KEY, ERP_DATABASE_URL
+docker compose up -d --build
+docker compose logs -f
+```
+
+Na API, defina `SYNC_API_KEY` (mesmo valor nos dois lados). Sem ela, `/sync/*`
+responde 503 de proposito.
+
+Importacao de planilhas: `/admin` > Sincronizacao > Importar planilhas. Sempre em duas
+etapas — analisar (nao grava) e depois aplicar.
 
 ---
 

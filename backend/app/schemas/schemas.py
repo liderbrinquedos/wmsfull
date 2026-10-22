@@ -60,6 +60,13 @@ class ProductUpdate(BaseModel):
     estoque_caixas: Optional[int] = None
 
 
+class EanUpdate(BaseModel):
+    """Codigos de barras. Campo ausente = nao alterar; string vazia = limpar."""
+
+    ean13: Optional[str] = None
+    ean14: Optional[str] = None
+
+
 # ── Nota Fiscal ──────────────────────────────────────────────────
 class NFItemOut(BaseModel):
     id: str

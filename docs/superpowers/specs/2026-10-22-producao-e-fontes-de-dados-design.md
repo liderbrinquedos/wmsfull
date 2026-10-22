@@ -1,6 +1,6 @@
 # Documento de Design — Producao e Fontes de Dados (WMSFull)
 
-**Data:** 2026-10-22 · **Status:** aprovado; fases 0 e 1 implementadas
+**Data:** 2026-10-22 · **Status:** aprovado; fases 0, 1, 3 e 4 implementadas
 
 ---
 
@@ -199,7 +199,11 @@ Canais de entrada, e apenas estes:
 |---|---|---|
 | `POST /sync/*` | agente (rede interna -> internet) | produtos e NFs do ERP |
 | `POST /import/*` | admin pela UI | fichas (EAN13/DUN14) e planilha de localizacao |
-| `POST /sync/requests` | admin pela UI | pedido de sincronizacao manual |
+| `POST /admin/sync/request` | admin pela UI | pedido de sincronizacao manual |
+
+O pedido manual ficou em `/admin/sync/request` (nao em `/sync/requests`): quem cria e o
+admin autenticado por JWT; quem consulta e o agente por `X-Sync-Key`, em
+`GET /sync/requests/pending`.
 
 Fluxo de uma execucao agendada:
 
@@ -225,10 +229,14 @@ env var), comparacao em tempo constante. Nao expostos no frontend.
 
 | Endpoint | Corpo | Regra |
 |---|---|---|
+| `POST /sync/runs` | `tipo`, `origem` | abre a execucao e devolve o id |
 | `POST /sync/produtos` | lote de ate 500 produtos | upsert por `codigo` |
 | `POST /sync/nf` | lote de NFs com itens | upsert por `chave_nfe`, com fallback `(cnpj_fornecedor, serie, numero)` |
 | `GET /sync/requests/pending` | - | devolve o pedido mais antigo ou 204 |
-| `POST /sync/runs/{id}/finish` | contagens, duracao, erros | fecha a execucao |
+| `POST /sync/runs/{id}/finish` | contagens, status, erros, `request_id` | fecha a execucao e atende o pedido |
+
+Implementado com `SYNC_API_KEY` vazia = 503 (endpoint desabilitado), o que evita subir sem
+a chave e achar que o sync esta funcionando.
 
 Erro **por item**, nao por lote: item invalido vira linha em `sync_run_errors` e o resto do
 lote entra.
@@ -249,10 +257,29 @@ Mapeamento:
 | `FICHA TECNICA *.xlsx` | `REF.` <-> `products.referencia` | `ean13`, `ean14` |
 | `Localizacao.xlsx` | `Codigo` <-> `products.codigo` | `localizacao` |
 
+O `tipo` vai como campo do formulario (`ficha` | `localizacao`). O `apply` reprocessa o
+arquivo enviado — nao ha estado entre as duas chamadas. Se o arquivo mudar entre preview e
+apply, o relatorio aplicado e o do arquivo novo; por isso o run guarda o nome do arquivo.
+
+Regras confirmadas na implementacao (medidas com as planilhas reais de 2026-10):
+
+| Situacao | Resultado |
+|---|---|
+| linha sem alteracao | conta em `sem_alteracao`, nao aparece como erro |
+| `CX MASTER` diferente de `qtd_embalagem` | vai para `divergencias`; **nunca** altera |
+| EAN13 divergente de um valor vindo do ERP | ERP preservado, motivo registrado |
+| EAN14 com `origem = manual` | preservado, motivo registrado |
+| DUN14 com DV invalido | linha rejeitada, com numero da linha na planilha |
+| `REF.` inexistente no catalogo | conta em `nao_encontradas` |
+| localizacao vazia na planilha | conta em `sem_localizacao`, nao apaga o endereco atual |
+
 ### 5.3 Painel do admin
 
 `GET /admin/sync/status` devolve: ultima execucao por tipo, quando, contagens, erros e
 pedido manual pendente. Sem isso, "o sync rodou" e fe.
+
+O pedido manual e criado por `POST /admin/sync/request` (idempotente: se ja existe um
+pendente, devolve o mesmo) e consumido pelo agente.
 
 ---
 
@@ -347,8 +374,8 @@ Nenhuma env com valor padrao no codigo: `SECRET_KEY` sem default quebra o boot d
 | 0. Seguranca | P0-01 a P0-05: segredos, credenciais do login, upload validado, `client_max_body_size`, compose | P | **concluida** |
 | 1. Schema | ADR-006, Alembic, colunas novas, seed data-only, container `migrate` | M | **concluida** |
 | 2. Homologacao | deploy Coolify com seed de demonstracao; valida dominio, TLS e ordem de boot | P |
-| 3. Ingestao ERP | `/sync/*`, agente no servidor interno, `sync_runs`, painel e botao no admin | G |
-| 4. Planilhas | `/import/preview` + `/apply`, fichas e localizacoes, CRUD de EAN no admin | M |
+| 3. Ingestao ERP | `/sync/*`, agente no servidor interno, `sync_runs`, painel e botao no admin | G | **concluida** |
+| 4. Planilhas | `/import/preview` + `/apply`, fichas e localizacoes, CRUD de EAN no admin | M | **concluida** |
 | 5. Go-live | `SEED_DEMO_DATA=false`, carga real (491 + localizacoes), primeiro sync, backup ligado | P |
 | 6. Pos-go-live | fila offline, compressao de foto, paginacao, testes | G |
 

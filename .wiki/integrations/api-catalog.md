@@ -6,10 +6,12 @@
 
 ## Autenticacao
 
-Todas as rotas (exceto `/auth/login`, `/` e `/health`) exigem:
+Todas as rotas (exceto `/auth/login`, `/`, `/health` e `/sync/*`) exigem:
 ```
 Authorization: Bearer <token>
 ```
+
+`/sync/*` usa `X-Sync-Key` (agente interno), nunca JWT.
 
 Token JWT HS256, payload `{sub: <user_id>, perfil: <perfil>}`, validade 480 min.
 
@@ -356,6 +358,60 @@ perfil `motorista`.
 
 ---
 
+## Ingestao (fase 3)
+
+Autenticacao **separada** do JWT: header `X-Sync-Key` comparado em tempo constante com
+`SYNC_API_KEY`. Sem a chave configurada na API, tudo responde 503.
+
+| Metodo | Rota | O que faz |
+|---|---|---|
+| POST | `/sync/runs` | abre a execucao (`tipo`, `origem`) e devolve o id |
+| POST | `/sync/produtos` | lote de ate 500 produtos; upsert por `codigo` |
+| POST | `/sync/nf` | lote de NFs com itens; upsert por `chave_nfe` |
+| GET | `/sync/requests/pending` | pedido manual mais antigo ou 204 |
+| POST | `/sync/runs/{id}/finish` | fecha a execucao e atende o pedido, se houver |
+
+Erro **por item**: o lote inteiro nao cai. A resposta traz `{lidos, gravados, erros[]}`.
+
+Regras de posse aplicadas no servidor:
+
+- o sync escreve `referencia`, `descricao`, `qtd_embalagem` e `ean13` (origem `erp`);
+- o sync **nunca** escreve `localizacao`, `estoque_caixas` nem `ean14`;
+- NF fora de `pendente` e recusada com o motivo registrado.
+
+## Importacao de planilhas (fase 4)
+
+`multipart/form-data` com `tipo` (`ficha` | `localizacao`) e `arquivo` `.xlsx`.
+Restrito a `admin` e `supervisor`.
+
+| Metodo | Rota | O que faz |
+|---|---|---|
+| POST | `/import/preview` | le, valida e devolve relatorio sem gravar |
+| POST | `/import/apply` | aplica o que passou e registra em `sync_runs` |
+
+Relatorio: `linhas_lidas`, `validas`, `rejeitadas`, `nao_encontradas`, `sem_alteracao`,
+`divergencias[]`, `erros[]` (linha + motivo) e `amostra[]` (antes/depois).
+
+## Painel de ingestao
+
+| Metodo | Rota | Perfis |
+|---|---|---|
+| GET | `/admin/sync/status` | admin, supervisor |
+| POST | `/admin/sync/request` | admin, supervisor |
+| GET | `/admin/sync/runs` | admin, supervisor |
+| GET | `/admin/sync/runs/{id}` | admin, supervisor |
+
+## Codigos de barras
+
+| Metodo | Rota | Perfis | O que faz |
+|---|---|---|---|
+| PUT | `/wms/products/{id}/ean` | admin, supervisor | grava `ean13`/`ean14` com origem `manual` |
+
+Campo ausente no corpo = nao alterar; string vazia = limpar. DV invalido responde 422;
+codigo ja usado por outro produto responde 409.
+
+---
+
 ## Uploads
 
 A API monta `/uploads` como `StaticFiles` servindo `UPLOAD_DIR`.
@@ -364,8 +420,9 @@ A API monta `/uploads` como `StaticFiles` servindo `UPLOAD_DIR`.
 GET /uploads/<uuid4>.<ext>
 ```
 
-O nginx do frontend repassa `/uploads/` para a API. Arquivos sao nomeados com `uuid4` +
-extensao original. **Sem** validacao de tipo nem limite de tamanho (backlog P0-04, P0-05).
+O nginx do frontend repassa `/uploads/` para a API. A foto do canhoto e validada em
+`app/core/uploads.py`: tipo (JPEG/PNG/WebP), assinatura binaria, 5 MB, extensao derivada
+do tipo declarado.
 
 ---
 

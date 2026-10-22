@@ -47,8 +47,9 @@ indice antes de tomar decisoes.
 - `[[projects/wmsfull]]` - Contexto completo do projeto
 
 ### Integrations
-- `[[integrations/api-catalog]]` - Catalogo completo dos 21 endpoints da API
-- `[[integrations/data-sources]]` - Fontes de dados (estado atual e pendencias)
+- `[[integrations/api-catalog]]` - Catalogo completo dos endpoints da API
+- `[[integrations/data-sources]]` - Fontes de dados (matriz de posse por campo)
+- `[[integrations/sync-agent]]` - Agente de ingestao no servidor interno
 
 ### Snippets
 - `[[snippets/utils]]` - Padroes reutilizaveis de codigo

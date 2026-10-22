@@ -3,7 +3,16 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from app.core.config import settings
-from app.routers import auth, wms, conference, delivery, admin
+from app.routers import (
+    auth,
+    wms,
+    conference,
+    delivery,
+    admin,
+    sync,
+    sync_admin,
+    imports,
+)
 
 app = FastAPI(
     title="WMSFull API",
@@ -33,6 +42,9 @@ app.include_router(wms.router)
 app.include_router(conference.router)
 app.include_router(delivery.router)
 app.include_router(admin.router)
+app.include_router(sync.router)
+app.include_router(sync_admin.router)
+app.include_router(imports.router)
 
 
 @app.get("/", tags=["Health"])

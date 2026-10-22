@@ -63,7 +63,18 @@ Nenhum item em aberto. Os cinco foram resolvidos na fase 0 (ver **Itens resolvid
 - 491 de 1.997 SKUs tem DUN14 nas fichas tecnicas; faltam 1.508.
 - **Impacto:** a bipagem da caixa nao tem codigo para tres de cada quatro produtos. O
   operador depende do botao "+1 Caixa".
-- **Correcao:** coletar fichas dos demais fornecedores + CRUD de EAN no admin (fase 4).
+- **Correcao:** coletar fichas dos demais fornecedores.
+- **Parcial (2026-10-22):** o import de fichas e o CRUD manual de EAN
+  (`PUT /wms/products/{id}/ean`, tela WMS > Codigos) estao prontos. O que falta e dado,
+  nao codigo.
+
+### P1-12 Sync parado nao gera alerta
+- `sync_runs` registra tudo, e o painel mostra "ultima execucao ha X horas", mas ninguem e
+  avisado quando o agente interno morre.
+- **Impacto:** catalogo e notas ficam velhos sem ninguem perceber (risco aceito na ADR-007
+  com a mitigacao do painel, que depende de alguem olhar).
+- **Correcao sugerida:** rotina na API que marca `sync_runs` atrasado e expoe isso no
+  `/health` (ou um alerta no Uptime Kuma batendo em `/admin/sync/status`).
 
 ---
 
@@ -121,9 +132,17 @@ Nenhum item em aberto. Os cinco foram resolvidos na fase 0 (ver **Itens resolvid
 - `frontend/src/store/authStore.ts:15` - `localStorage` corrompido quebra o bundle.
 
 ### P2-14 Mensagem de carregamento cita um ERP que nao existe
-- `frontend/src/modules/wms/WMSPage.tsx` - "Carregando produtos do ERP...".
-- **Impacto:** informacao falsa para o operador enquanto o sync nao existir.
-- **Correcao:** trocar por "Carregando produtos"; reavaliar quando a fase 3 entrar.
+- **Resolvido em:** 2026-10-22 (fase 1). Texto ajustado para "Carregando produtos...".
+- Quando a fase 3 entrou, o ERP passou a existir de verdade: a mensagem voltaria a ser
+  verdadeira, mas o loading nao diferencia busca local de sync.
+
+### P2-15 Importacao e sync sem teste automatizado
+- `app/core/planilhas.py`, `app/routers/imports.py`, `app/routers/sync.py` e as regras de
+  fusao (ERP prevalece, manual preservado, NF fora de pendente ignorada) foram validados
+  manualmente com as planilhas reais e com o agente em modo CSV.
+- **Impacto:** uma regressao nessas regras so aparece em producao.
+- **Correcao:** pytest cobrindo DV, parser das 3 fichas, conflito de unicidade e a matriz de
+  posse da ADR-007 (ja existe a amostra pronta em `sync-agent/exemplos/`).
 
 ---
 
@@ -213,3 +232,6 @@ Nenhum item em aberto. Os cinco foram resolvidos na fase 0 (ver **Itens resolvid
 - `LocationBadge` valida `RUA + 3 digitos + NIVEL`; fora disso renderiza o texto cru.
 - `MoveLocationModal` nao quebra com localizacao nula e recusa o parse quando o endereco
   nao segue o padrao.
+
+### P2-14 Mensagem de carregamento cita um ERP que nao existe
+- **Resolvido em:** 2026-10-22. Texto passou a ser "Carregando produtos...".

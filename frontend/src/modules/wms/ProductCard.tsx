@@ -6,9 +6,10 @@ interface ProductCardProps {
   product: Product;
   canEdit: boolean;
   onEdit: (product: Product) => void;
+  onEditEan: (product: Product) => void;
 }
 
-export const ProductCard: React.FC<ProductCardProps> = ({ product, canEdit, onEdit }) => {
+export const ProductCard: React.FC<ProductCardProps> = ({ product, canEdit, onEdit, onEditEan }) => {
   return (
     <div className="card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
       <div>
@@ -61,13 +62,20 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, canEdit, onEd
       </div>
 
       {canEdit && (
-        <div style={{ marginTop: '14px', paddingTop: '10px', borderTop: '1px solid var(--border-color)' }}>
+        <div style={{ marginTop: '14px', paddingTop: '10px', borderTop: '1px solid var(--border-color)', display: 'flex', gap: '8px' }}>
           <button
             onClick={() => onEdit(product)}
             className="btn btn-secondary"
-            style={{ width: '100%', fontSize: '0.82rem', padding: '6px 12px' }}
+            style={{ flex: 1, fontSize: '0.82rem', padding: '6px 10px' }}
           >
-            📍 Alterar Localização
+            📍 Localização
+          </button>
+          <button
+            onClick={() => onEditEan(product)}
+            className="btn btn-secondary"
+            style={{ flex: 1, fontSize: '0.82rem', padding: '6px 10px' }}
+          >
+            🏷️ Códigos
           </button>
         </div>
       )}

@@ -17,9 +17,9 @@
 | 4 | Fase 0 - seguranca | Concluido (2026-10-22) |
 | 5 | Fase 1 - Alembic e schema | Concluido (2026-10-22) |
 | 6 | Fase 2 - homologacao no Coolify | **Proximo** (depende de acesso ao servidor) |
-| 7 | Fase 3 - ingestao ERP (`/sync/*` + agente) | Pendente |
-| 8 | Fase 4 - importacao de planilhas | Pendente |
-| 9 | Fase 5 - go-live | Pendente |
+| 7 | Fase 3 - ingestao ERP (`/sync/*` + agente) | Concluido (2026-10-22) |
+| 8 | Fase 4 - importacao de planilhas | Concluido (2026-10-22) |
+| 9 | Fase 5 - go-live | Pendente (depende da fase 2) |
 
 ---
 
@@ -63,6 +63,28 @@ Extra: P1-01 (CORS por env var) e `SEED_DEMO_DATA` (seed nao roda mais em produc
 - [x] Frontend tolera `localizacao` nula e endereco fora do padrao
 
 Pendencia conhecida: `P1-11` (1.508 SKUs sem DUN14) so fecha na fase 4.
+
+---
+
+## Fase 3 - Ingestao ERP (concluida em 2026-10-22)
+
+- [x] `POST /sync/runs`, `/sync/produtos`, `/sync/nf`, `/sync/requests/pending`,
+      `/sync/runs/{id}/finish` com `X-Sync-Key`
+- [x] Regras de posse: ERP escreve identidade/ean13/qtd; nunca localizacao, estoque ou ean14
+- [x] NF fora de `pendente` ignorada; erro por item em `sync_run_errors`
+- [x] Painel `/admin` > Sincronizacao (ultima execucao, erros, botao "Sincronizar agora")
+- [x] Agente `sync-agent/` com fontes Postgres e CSV, agenda + polling de pedido
+
+## Fase 4 - Planilhas (concluida em 2026-10-22)
+
+- [x] Parser das fichas (`REF.`, variacoes de cabecalho) e da planilha de localizacao
+- [x] `POST /import/preview` (nao grava) e `POST /import/apply`
+- [x] Divergencias de `CX MASTER` so reportadas; ERP prevalece
+- [x] CRUD manual de EAN (`PUT /wms/products/{id}/ean`) com DV validado
+- [x] Tela de importacao no painel do admin
+
+Falta para o go-live: deploy no Coolify (fase 2) e carga real + agente apontando para o ERP
+(fase 5).
 
 ---
 

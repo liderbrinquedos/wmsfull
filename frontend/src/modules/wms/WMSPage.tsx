@@ -3,6 +3,7 @@ import { Product, wmsApi } from '../../api/client';
 import { useAuthStore } from '../../store/authStore';
 import { ProductCard } from './ProductCard';
 import { MoveLocationModal } from './MoveLocationModal';
+import { EanModal } from './EanModal';
 
 export const WMSPage: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -10,6 +11,7 @@ export const WMSPage: React.FC = () => {
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [editingEan, setEditingEan] = useState<Product | null>(null);
 
   const { user } = useAuthStore();
   const canEdit = ['admin', 'supervisor'].includes(user?.perfil || '');
@@ -118,7 +120,7 @@ export const WMSPage: React.FC = () => {
       {/* Product List Grid */}
       {loading ? (
         <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
-          Carregando produtos do ERP...
+          Carregando produtos...
         </div>
       ) : products.length === 0 ? (
         <div className="card" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
@@ -136,16 +138,25 @@ export const WMSPage: React.FC = () => {
               product={product}
               canEdit={canEdit}
               onEdit={setEditingProduct}
+              onEditEan={setEditingEan}
             />
           ))}
         </div>
       )}
 
-      {/* Edit Modal */}
+      {/* Edit Modals */}
       {editingProduct && (
         <MoveLocationModal
           product={editingProduct}
           onClose={() => setEditingProduct(null)}
+          onSuccess={handleProductUpdated}
+        />
+      )}
+
+      {editingEan && (
+        <EanModal
+          product={editingEan}
+          onClose={() => setEditingEan(null)}
           onSuccess={handleProductUpdated}
         />
       )}
