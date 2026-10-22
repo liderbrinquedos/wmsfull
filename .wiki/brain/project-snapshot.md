@@ -12,9 +12,11 @@
 - Codigo funcional completo (backend + frontend + docker-compose).
 - Documentacao da wiki criada nesta revisao (`.wiki/`).
 - Repositorio: `git@github.com:liderbrinquedos/wmsfull.git` (branch `main`).
-- **Nao** ha deploy em producao ainda - deploy e fontes de dados estao em aberto
-  (ver `[[current-focus]]`).
-- **Nao** ha testes, **nao** ha importacao de dados, **nao** ha migracoes de schema.
+- **Nao** ha deploy em producao ainda. O plano esta fechado em
+  `docs/superpowers/specs/2026-10-22-producao-e-fontes-de-dados-design.md`
+  (fases 0 a 5; ver `[[current-focus]]`).
+- **Nao** ha testes, **nao** ha importacao de dados, **nao** ha migracoes de schema
+  (ADR-006 aprovada, ainda nao implementada).
 
 ---
 
@@ -69,7 +71,7 @@ wmsfull/
 │       └── assets/icons/           # VAZIO
 ├── docker-compose.yml              # db 5435, api 8005, web 3005
 ├── .wiki/                          # base de conhecimento
-├── backlog/tech-debt.md            # 28 itens priorizados
+├── backlog/tech-debt.md            # 38 itens priorizados
 └── docs/                           # especificacoes de design
 ```
 

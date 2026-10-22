@@ -2,7 +2,7 @@
 
 > **Projeto:** WMSFull - Sistema Logistico (WMS + Conferencia + Entrega)
 > **Ultima atualizacao:** 2026-10-22
-> **Proximo ADR:** ADR-006
+> **Proximo ADR:** ADR-008
 
 Este diretorio e o segundo cerebro do projeto. Subagentes e opencode devem consultar este
 indice antes de tomar decisoes.
@@ -30,6 +30,12 @@ indice antes de tomar decisoes.
 - [[decisions/003-schema-criado-por-seed-sem-alembic]] - Schema criado pelo seed, sem Alembic
 - [[decisions/004-pwa-instalavel-sem-fila-offline]] - PWA instalavel, sem fila offline
 - [[decisions/005-consolidacao-de-wms-conferencia-entrega]] - Um unico app para as 3 operacoes
+- [[decisions/006-alembic-e-migracoes]] - Alembic e migracoes versionadas (substitui a 003)
+- [[decisions/007-ingestao-por-agente-push]] - Ingestao de dados por agente push (ERP -> API)
+
+### Docs (especificacoes de design)
+- `docs/superpowers/specs/2026-10-22-producao-e-fontes-de-dados-design.md` - Producao,
+  topologia, contratos de sync/import, modelo de dados e fases
 
 ### Patterns
 - `[[patterns/coding-standards]]` - Padroes de codigo (Python, SQLAlchemy 2.0, TypeScript, React)

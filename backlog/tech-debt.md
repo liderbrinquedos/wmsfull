@@ -99,6 +99,19 @@
   `backend/app/core/security.py:32`.
 - **Correcao:** `datetime.now(timezone.utc)`.
 
+### P1-10 `notas_fiscais.numero` nao e chave natural
+- `backend/app/models/nota_fiscal.py:19` - `numero` unico isoladamente.
+- **Impacto:** dois fornecedores podem emitir a NF 1234 no mesmo dia; o segundo lote do
+  sync do ERP seria rejeitado pela constraint.
+- **Correcao:** `chave_nfe` (44) unica + indice composto
+  `(cnpj_fornecedor, serie, numero)` - ver spec, secao 6.2.
+
+### P1-11 Cobertura de EAN14 (caixa master) em 24,6%
+- 491 de 1.997 SKUs tem DUN14 nas fichas tecnicas; faltam 1.508.
+- **Impacto:** a bipagem da caixa nao tem codigo para tres de cada quatro produtos. O
+  operador depende do botao "+1 Caixa".
+- **Correcao:** coletar fichas dos demais fornecedores + CRUD de EAN no admin (fase 4).
+
 ---
 
 ## P2 - Qualidade e Manutencao
@@ -153,6 +166,19 @@
 
 ### P2-12 `JSON.parse` sem `try/catch` no store
 - `frontend/src/store/authStore.ts:15` - `localStorage` corrompido quebra o bundle.
+
+### P2-13 Decoder de localizacao quebra com endereco fora do padrao
+- `frontend/src/modules/wms/LocationBadge.tsx:8-11` - assume sempre 5 caracteres.
+- 49 SKUs da planilha de referencia usam texto livre (`MOSSORO`, `SACARIA`,
+  `BOLAS CHEIAS`) e 2 usam endereco duplo (`A041A/A042A`).
+- **Impacto:** tooltip com "Rua M - Prateleira O - Posicao SS - Nivel O".
+- **Correcao:** validar o padrao `RUA + 3 digitos + NIVEL` e, fora dele, renderizar texto
+  simples sem decodificar.
+
+### P2-14 Mensagem de carregamento cita um ERP que nao existe
+- `frontend/src/modules/wms/WMSPage.tsx` - "Carregando produtos do ERP...".
+- **Impacto:** informacao falsa para o operador enquanto o sync nao existir.
+- **Correcao:** trocar por "Carregando produtos"; reavaliar quando a fase 3 entrar.
 
 ---
 

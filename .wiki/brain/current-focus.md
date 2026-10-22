@@ -6,49 +6,55 @@
 
 ## Foco Atual
 
-**Documentar, versionar e planejar a producao.**
+**Implementar o plano de producao aprovado** em
+`docs/superpowers/specs/2026-10-22-producao-e-fontes-de-dados-design.md`.
 
-| # | Frente | Estado | Proximo passo |
-|---|---|---|---|
-| 1 | Documentacao (`.wiki/`, `AGENTS.md`, `README.md`) | Concluido | - |
-| 2 | Repositorio GitHub | Concluido | - |
-| 3 | Brainstorm de producao + fontes de dados | **Em aberto** | Responder as perguntas do brainstorm |
-
----
-
-## Em Aberto - Brainstorm de Producao
-
-Decisoes que precisam ser tomadas (ver `[[projects/wmsfull]]` e `backlog/tech-debt.md`):
-
-### Deploy
-- [ ] Plataforma: Coolify (padrao da familia `logdriver`/`logstock`) ou outra?
-- [ ] Migrar `docker-compose.yml` de `ports:` para `expose:` + `docker-compose.override.yml`?
-- [ ] Dominio e HTTPS: qual FQDN para web e para a API?
-- [ ] Postgres: mesma instancia Coolify ou servidor dedicado?
-- [ ] Strategy de backup do banco?
-- [ ] Ordem de boot: seed/migracao como container one-shot (`restart: "no"`)?
-
-### Fontes de Dados
-- [ ] Origem do catalogo de produtos: ERP via API, `.xlsx` (padrao do `logconf`) ou cadastro manual?
-- [ ] Origem das notas fiscais e seus itens: idem?
-- [ ] Cadastro de produtos/posicoes de estoque: tela admin ou importacao?
-- [ ] Frequencia de atualizacao: tempo real, batch diario ou sob demanda?
-- [ ] Quem e a fonte de verdade (ERP ou WMSFull) para a localizacao do estoque?
-
-### Confiabilidade
-- [ ] Fila offline de bipagens e entregas (PWA)?
-- [ ] Compressao/thumbnail da foto do canhoto (Pillow ja esta instalado)?
-- [ ] Limite de tamanho do upload (nginx esta em 1 MB)?
-
-### Seguranca
-- [ ] Remover credenciais de teste da tela de login?
-- [ ] Rotacao de `SECRET_KEY` e validade do token?
-- [ ] CORS restrito ao dominio de producao?
+| # | Frente | Estado |
+|---|---|---|
+| 1 | Documentacao (`.wiki/`, `AGENTS.md`, `README.md`) | Concluido |
+| 2 | Repositorio GitHub | Concluido |
+| 3 | Brainstorm de producao + fontes de dados | Concluido (spec + ADR-006 + ADR-007) |
+| 4 | Fase 0 - seguranca | **Em andamento** |
+| 5 | Fase 1 - Alembic e schema | Pendente |
+| 6 | Fase 2 - homologacao no Coolify | Pendente |
+| 7 | Fase 3 - ingestao ERP (`/sync/*` + agente) | Pendente |
+| 8 | Fase 4 - importacao de planilhas | Pendente |
+| 9 | Fase 5 - go-live | Pendente |
 
 ---
 
-## Proximos Passos Sugeridos
+## Decisoes Fechadas
 
-1. Fechar o brainstorm e registrar as decisoes como ADRs 006+.
-2. Transformar as ADRs em um backlog de implementacao priorizado.
-3. Executar P0 (segredos, upload, compose) antes de qualquer deploy.
+| Decisao | Registro |
+|---|---|
+| App publico no Coolify (celular pessoal com 4G) | spec, secao 3 (D1) |
+| Ingestao por agente push, sem porta aberta | [[decisions/007-ingestao-por-agente-push]] |
+| Batch 3x/dia (06h, 12h, 18h) + sincronizacao manual | spec, secao 3 (D3) |
+| ERP manda produto/NF; WMSFull manda localizacao e estoque | spec, secao 3 (D4) |
+| Localizacao **nao** vem do ERP; vem da planilha de referencia | spec, secao 3 (D4, D5) |
+| Bipagem so por EAN14 (caixa) e codigo master legado | spec, secao 3 (D6) |
+| Alembic agora, com uma migracao inicial | [[decisions/006-alembic-e-migracoes]] |
+| Cobertura de DUN14 e pendencia de cadastro (1.508 SKUs) | spec, secao 3 (D7) |
+
+---
+
+## Fase 0 - Seguranca (em andamento)
+
+Itens de `backlog/tech-debt.md` que bloqueiam o deploy:
+
+- [ ] P0-01 `SECRET_KEY` e `DATABASE_URL` obrigatorios, sem default
+- [ ] P0-02 remover credenciais de teste da tela de login
+- [ ] P0-03 compose com `expose` + `docker-compose.override.yml`
+- [ ] P0-04 validar upload de foto do canhoto
+- [ ] P0-05 `client_max_body_size` no nginx
+
+---
+
+## Pendencias de Dados (nao de codigo)
+
+- [ ] Fichas tecnicas dos demais fornecedores (1.508 SKUs sem DUN14)
+- [ ] Correcao na origem de 15 codigos com DV invalido e 2 com tamanho errado
+- [ ] Definir quem corrige as 24 divergencias de `CX MASTER` no ERP
+- [ ] Endereco dos 1.381 SKUs sem localizacao
+- [ ] Host do banco do ERP + usuario read-only + views
+- [ ] Destino do backup secundario

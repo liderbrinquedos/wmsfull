@@ -35,4 +35,8 @@ uploads/
 .idea/
 .DS_Store
 *.Zone.Identifier
+*:Zone.Identifier
 *.swp
+
+# Planilhas de referencia (dados de entrada, nao versionar)
+/*.xlsx
